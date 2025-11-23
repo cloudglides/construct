@@ -5,12 +5,12 @@
 	import Prizes from './Prizes.svelte';
 	import Footer from './Footer.svelte';
 
-	import model from '$lib/assets/rocket.3mf?url';
+	import model from '$lib/assets/keyring.obj?url';
 
 	let { data } = $props();
 
 	import * as THREE from 'three';
-	import { ThreeMFLoader } from 'three/examples/jsm/Addons.js';
+	import { OBJLoader } from 'three/examples/jsm/Addons.js';
 	import { OrbitControls } from 'three/examples/jsm/Addons.js';
 	import { onMount } from 'svelte';
 	import Head from '$lib/components/Head.svelte';
@@ -90,6 +90,15 @@
 			}
 		}
 
+		var meshMaterial = new THREE.MeshStandardMaterial({
+			transparent: true,
+			opacity: 0.9,
+			color: 0xb2a090,
+			roughness: 0.5,
+			flatShading: false,
+			side: THREE.DoubleSide
+		});
+
 		function parseObject(object: THREE.Group<THREE.Object3DEventMap>) {
 			object = object as THREE.Group<THREE.Object3DEventMap> & { children: THREE.Mesh[] };
 
@@ -110,8 +119,8 @@
 			box.getSize(size);
 			const largestDimension = Math.max(size.x, size.y, size.z);
 
-			camera.position.z = largestDimension * 1.75;
-			camera.position.y = 0;
+			camera.position.z = largestDimension * 0.6;
+			camera.position.y = largestDimension * 1.4;
 
 			directional.position.set(largestDimension * 2, largestDimension * 2, largestDimension * 2);
 			directional2.position.set(-largestDimension * 2, largestDimension * 2, -largestDimension * 2);
@@ -128,21 +137,27 @@
 
 				const mesh = child as THREE.Mesh;
 
-				const material = mesh.material;
+				// const material = mesh.material;
 
-				if (Array.isArray(material)) {
-					material.forEach((mat) => {
-						mat.transparent = true;
-						mat.side = THREE.DoubleSide;
-						mat.opacity = 0.9;
-						mat.needsUpdate = true;
-					});
-				} else if (material instanceof THREE.Material) {
-					material.transparent = true;
-					material.side = THREE.DoubleSide;
-					material.opacity = 0.9;
-					material.needsUpdate = true;
-				}
+				// if (Array.isArray(material)) {
+				// 	material.forEach((mat) => {
+				// 		mat.transparent = true;
+				// 		mat.side = THREE.DoubleSide;
+				// 		mat.opacity = 0.9;
+				// 		mat.needsUpdate = true;
+				// 	});
+				// } else if (material instanceof THREE.Material) {
+				// 	material.transparent = true;
+				// 	material.side = THREE.DoubleSide;
+				// 	material.opacity = 0.9;
+				// 	material.needsUpdate = true;
+				// }
+
+				if (Array.isArray(mesh.material)) {
+						mesh.material = meshMaterial;
+					} else if (mesh.material instanceof THREE.Material) {
+						mesh.material = meshMaterial;
+					}
 
 				const edges = new THREE.EdgesGeometry(mesh.geometry);
 				const lines = new THREE.LineSegments(
@@ -170,7 +185,7 @@
 			scene.add(object);
 		}
 
-		var loader = new ThreeMFLoader();
+		var loader = new OBJLoader();
 
 		loader.load(
 			model,
@@ -215,15 +230,15 @@
 
 <div class="flex w-full flex-col items-center justify-center px-10 lg:flex-row">
 	<div class="mt-40">
-		<h1 class="font-hero text-4xl sm:text-5xl md:text-6xl">Framework</h1>
-		<p class="my-3 text-xl font-medium">Design a Framework expansion card, get it manufactured!</p>
+		<h1 class="font-hero text-4xl sm:text-5xl md:text-6xl">Construct</h1>
+		<p class="my-3 text-xl font-medium">Spend 50 hours doing CAD, get a 3D printer!</p>
 		{#if data.loggedIn}
 			<Button text="Go to dashboard" href="/dashboard" />
 		{:else}
 			<Button text="Login with Hack Club" href="/auth/idv" />
 		{/if}
 	</div>
-	<div class="mt-12 flex h-80 w-80 flex-col md:w-100">
+	<div class="mt-12 flex h-100 w-80 flex-col md:w-100">
 		<canvas class="h-full w-full" id={`canvas`}></canvas>
 		<p class="mt-2 w-full text-center text-sm">interact with me!</p>
 	</div>
