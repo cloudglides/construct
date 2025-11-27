@@ -6,6 +6,8 @@
 	import { Ship } from '@lucide/svelte';
 
 	let { data }: PageProps = $props();
+
+	let formPending = $state(false);
 </script>
 
 <Head title="Ship project" />
@@ -25,9 +27,19 @@
 	Are you sure you want to ship "{data.project.name}"? You won't be able to edit it or journal again
 	unless it gets rejected.
 </p>
-<form method="POST" class="mt-2 flex flex-row gap-2" use:enhance>
+<form
+	method="POST"
+	class="mt-2 flex flex-row gap-2"
+	use:enhance={() => {
+		formPending = true;
+		return async ({ update }) => {
+			await update();
+			formPending = false;
+		};
+	}}
+>
 	<a href={`/dashboard/projects/${data.project.id}`} class="button sm primary">Cancel</a>
-	<button class="button sm orange">
+	<button class="button sm orange" disabled={formPending}>
 		<Ship />
 		Ship
 	</button>

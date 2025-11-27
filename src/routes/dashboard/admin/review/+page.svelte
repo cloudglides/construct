@@ -20,6 +20,8 @@
 	let filteredUsers = $derived(
 		data.users.filter((user) => user.name.toLowerCase().includes(userSearch.toLowerCase()))
 	);
+
+	let formPending = $state(false);
 </script>
 
 <Head title="Review" />
@@ -30,7 +32,16 @@
 	<div class="flex flex-col-reverse gap-5 lg:flex-row">
 		<div class="themed-box grow p-3">
 			<h2 class="mb-2 text-xl font-bold">Filter & Sort</h2>
-			<form method="POST" use:enhance>
+			<form
+				method="POST"
+				use:enhance={() => {
+					formPending = true;
+					return async ({ update }) => {
+						await update();
+						formPending = false;
+					};
+				}}
+			>
 				<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
 					<!-- Project status -->
 					<label class="flex flex-col gap-1">
@@ -97,7 +108,7 @@
 						</div>
 					</label>
 				</div>
-				<button type="submit" class="button md primary mt-3 w-full">Apply!</button>
+				<button type="submit" class="button md primary mt-3 w-full" disabled={formPending}>Apply!</button>
 			</form>
 		</div>
 		<div class="themed-box grow p-3 lg:min-w-[30%]">

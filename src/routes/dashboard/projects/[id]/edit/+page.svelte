@@ -4,12 +4,24 @@
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	let formPending = $state(false);
 </script>
 
 <Head title="Edit project" />
 
 <h1 class="mt-5 mb-3 font-hero text-2xl font-medium">Edit project</h1>
-<form method="POST" class="flex flex-col gap-3" use:enhance>
+<form
+	method="POST"
+	class="flex flex-col gap-3"
+	use:enhance={() => {
+		formPending = true;
+		return async ({ update }) => {
+			await update();
+			formPending = false;
+		};
+	}}
+>
 	<div>
 		<label class="flex flex-col gap-1">
 			Project name*
@@ -55,10 +67,7 @@
 			<p class="text-sm">Invalid URL</p>
 		{/if}
 	</div>
-	<button
-		type="submit"
-		class="mt-3 button md primary"
-	>
+	<button type="submit" class="button md primary mt-3" disabled={formPending}>
 		Update project
 	</button>
 </form>

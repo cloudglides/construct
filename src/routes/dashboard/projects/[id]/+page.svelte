@@ -34,6 +34,8 @@
 			data.validationConstraints.timeSpent.currentMax
 		);
 	}
+
+	let formPending = $state(false);
 </script>
 
 <Head title={data.project.name} />
@@ -100,7 +102,18 @@
 			<p>Journalling is locked as the project has been shipped</p>
 		</div>
 	{:else if data.validationConstraints.timeSpent.currentMax >= data.validationConstraints.timeSpent.min}
-		<form method="POST" class="flex flex-col gap-3" enctype="multipart/form-data" use:enhance>
+		<form
+			method="POST"
+			class="flex flex-col gap-3"
+			enctype="multipart/form-data"
+			use:enhance={() => {
+				formPending = true;
+				return async ({ update }) => {
+					await update();
+					formPending = false;
+				};
+			}}
+		>
 			<div class="flex flex-col gap-2">
 				<label class="flex flex-col gap-1">
 					Time spent (minutes)
@@ -193,7 +206,9 @@
 					</label>
 				</div>
 			</div>
-			<button type="submit" class="button md primary">Add journal entry!</button>
+			<button type="submit" class="button md primary" disabled={formPending}
+				>Add journal entry!</button
+			>
 		</form>
 	{:else}
 		<p>

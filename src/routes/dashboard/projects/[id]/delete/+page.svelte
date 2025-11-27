@@ -6,6 +6,8 @@
 	import { Trash } from '@lucide/svelte';
 
 	let { data }: PageProps = $props();
+
+	let formPending = $state(false);
 </script>
 
 <Head title="Delete project" />
@@ -22,9 +24,19 @@
 	clickable={false}
 />
 <p class="mt-3">Are you sure you want to delete "{data.project.name}"? This is permanent.</p>
-<form method="POST" class="flex flex-row gap-2 mt-2" use:enhance>
+<form
+	method="POST"
+	class="mt-2 flex flex-row gap-2"
+	use:enhance={() => {
+		formPending = true;
+		return async ({ update }) => {
+			await update();
+			formPending = false;
+		};
+	}}
+>
 	<a href={`/dashboard/projects/${data.project.id}`} class="button sm primary">Cancel</a>
-	<button class="button sm dark-red">
+	<button class="button sm dark-red" disabled={formPending}>
 		<Trash size={20} />
 		Delete
 	</button>
