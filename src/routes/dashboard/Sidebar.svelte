@@ -7,7 +7,10 @@
 		LogOut,
 		ClipboardPen,
 		ClipboardPenLine,
-		Store
+		Store,
+
+		ShieldUser
+
 	} from '@lucide/svelte';
 	import { page } from '$app/state';
 	import logo from '$lib/assets/logo.png';
@@ -36,10 +39,15 @@
 		</SidebarButton>
 	{/if}
 	<!-- {#if user.hasT2Review}
-		<SidebarButton icon={ClipboardPenLine} href="/dashboard/admin/ysws-review" admin={true}>
-			YSWS Review
-		</SidebarButton>
+	<SidebarButton icon={ClipboardPenLine} href="/dashboard/admin/ysws-review" admin={true}>
+	YSWS Review
+	</SidebarButton>
 	{/if} -->
+	{#if user.hasAdmin}
+		<SidebarButton icon={ShieldUser} href="/dashboard/admin/admin" admin={true}>
+			Admin
+		</SidebarButton>
+	{/if}
 	<div class="grow"></div>
 	<a
 		href={isOnOwnUserPage ? null : `/dashboard/users/${user.id}`}

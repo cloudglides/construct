@@ -156,7 +156,7 @@ export async function GET(event) {
 			hasT2Review: true,
 			hasProjectAuditLogs: true,
 			hasSessionAuditLogs: true,
-			hasAdmin: false
+			hasAdmin: true
 		});
 
 		[databaseUser] = await db.select().from(user).where(eq(user.idvId, id)).limit(1);
