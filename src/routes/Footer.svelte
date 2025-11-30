@@ -2,7 +2,7 @@
 </script>
 
 <footer
-	class="flex w-full flex-col items-center justify-center px-10 pt-5 pb-3 md:mt-8 lg:mt-8 lg:flex-row"
+	class="flex w-full flex-col items-center justify-center px-10 pt-5 pb-3 md:mt-8 lg:mt-8"
 >
 	<div class="">
 		<p class="text-center">

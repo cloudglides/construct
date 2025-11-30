@@ -106,6 +106,32 @@ export async function GET(event) {
 	const profilePic = slackProfile['profile']['image_1024'];
 	const username = slackProfile['profile']['display_name'];
 
+	if (env.BETA_CHANNEL_ID && env.BETA_CHANNEL_ID.length > 0) {
+		const channelMembersURL = new URL('https://slack.com/api/conversations.members');
+		channelMembersURL.searchParams.set('channel', env.BETA_CHANNEL_ID);
+
+		const channelMembersBody = new URLSearchParams();
+		channelMembersBody.append('token', env.SLACK_BOT_TOKEN ?? '');
+
+		const channelMembersRes = await fetch(channelMembersURL, {
+			method: 'POST',
+			body: channelMembersBody
+		});
+
+		const channelMembersResJSON = await channelMembersRes.json();
+
+		if (!channelMembersResJSON.ok) {
+			const redirectURL = new URL(`${url.protocol}//${url.host}/auth/failed`);
+			return redirect(302, redirectURL);
+		}
+
+		if (!channelMembersResJSON['members'].includes(slack_id)) {
+			// redirect to funny url
+			const redirectURL = new URL(`https://www.youtube.com/watch?v=xvFZjo5PgG0`);
+			return redirect(302, redirectURL);
+		}
+	}
+
 	// Check Hackatime trust
 	const hackatimeTrust = (
 		await (
@@ -129,6 +155,11 @@ export async function GET(event) {
 
 	// Create user if doesn't exist
 	let [databaseUser] = await db.select().from(user).where(eq(user.idvId, id)).limit(1);
+
+	if (databaseUser.trust === 'red') {
+		// Prevent login
+		return redirect(302, 'https://fraud.land');
+	}
 
 	if (databaseUser) {
 		// Update user (update name and profile picture and lastLoginAt on login)
