@@ -51,8 +51,6 @@ export const actions = {
 		const hasAdmin = data.get('has_admin');
 		const hasProjectAuditLogs = data.get('has_project_audit_logs');
 
-		// TODO: add check to disable un-admining superadmin
-
 		await db
 			.update(user)
 			.set({
