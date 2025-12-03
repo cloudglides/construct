@@ -244,7 +244,7 @@
 		</div>
 		<img src={modelImage} alt="construct model logo" class="mt-3 mb-6 sm:hidden" />
 		<div class="relative z-1 w-full text-center">
-			<p class="my-3 text-xl font-medium">Spend 50 hours doing CAD projects, get a 3D printer!</p>
+			<p class="my-3 text-xl font-medium">Spend 40 hours doing CAD projects, get a 3D printer!</p>
 			{#if data.loggedIn}
 				<Button text="Go to dashboard" href="/dashboard" />
 			{:else}
@@ -259,7 +259,7 @@
 	<h1 class="mb-3 text-center text-3xl font-bold sm:text-4xl">What is this?</h1>
 	<div class="w-full max-w-2xl">
 		<p class="mt-3 max-w-2xl">
-			<strong>Want a 3D printer?</strong> Spend 50 hours doing CAD projects, get a free 3D printer of
+			<strong>Want a 3D printer?</strong> Spend 40 hours doing CAD projects, get a free 3D printer of
 			your choice!
 		</p>
 	</div>
@@ -289,7 +289,7 @@
 			</p>
 		</Accordion>
 		<Accordion text="What are the requirements to get a 3D printer?">
-			<p>You must ship at least 50 hours' worth of projects by the end of the event.</p>
+			<p>You must ship at least 40 hours' worth of projects by the end of the event.</p>
 		</Accordion>
 		<Accordion text="What are the requirements to participate?">
 			<p>
