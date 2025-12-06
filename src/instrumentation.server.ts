@@ -1,4 +1,4 @@
-import { env } from '$env/dynamic/public';
+import { env } from '$env/dynamic/private';
 import * as Sentry from '@sentry/sveltekit';
 
 Sentry.init({
