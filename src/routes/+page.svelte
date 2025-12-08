@@ -9,20 +9,25 @@
 
 	import model from '$lib/assets/Construct Logo.3mf?url';
 	import modelImage from '$lib/assets/model.png';
+	import keyringModel from '$lib/assets/keyring.obj?url';
+	import sticker1Image from '$lib/assets/sticker1.png';
+	import sticker2Image from '$lib/assets/sticker2.png';
 
 	let { data } = $props();
 
 	import * as THREE from 'three';
 	import { ThreeMFLoader } from 'three/examples/jsm/Addons.js';
+	import { OBJLoader } from 'three/examples/jsm/Addons.js';
 	import { OrbitControls } from 'three/examples/jsm/Addons.js';
 	import { onMount } from 'svelte';
 	import Head from '$lib/components/Head.svelte';
 
-	// Necessary for camera/plane rotation
 	let degree = Math.PI / 180;
+	let showStickersSection = $state(false);
+	let keyringInitialized = false;
 
-	// Create scene
 	const scene = new THREE.Scene();
+	const keyringScene = new THREE.Scene();
 
 	onMount(() => {
 		if (!model) {
@@ -210,9 +215,260 @@
 		};
 		animate();
 	});
+
+	$effect(() => {
+		if (!showStickersSection || keyringInitialized || !keyringModel) {
+			return;
+		}
+
+		setTimeout(() => {
+			let keyringCanvas = document.querySelector(`#keyring-canvas`);
+
+			if (!keyringCanvas) {
+				return;
+			}
+
+			keyringInitialized = true;
+
+			const keyringRenderer = new THREE.WebGLRenderer({
+				canvas: keyringCanvas,
+				antialias: true,
+				alpha: true
+			});
+
+			keyringRenderer.setClearColor(0xffffff, 0);
+			keyringRenderer.setPixelRatio(window.devicePixelRatio);
+			keyringRenderer.shadowMap.enabled = true;
+			keyringRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+			const keyringCamera = new THREE.PerspectiveCamera(40, 2, 1, 1000);
+			keyringCamera.rotation.x = -45 * degree;
+
+			let keyringControls = new OrbitControls(keyringCamera, keyringRenderer.domElement);
+			keyringControls.target.set(0, 0, 0);
+			keyringControls.rotateSpeed = 0.6;
+			keyringControls.enablePan = false;
+			keyringControls.dampingFactor = 0.1;
+			keyringControls.enableDamping = true;
+			keyringControls.autoRotate = true;
+			keyringControls.autoRotateSpeed = 3;
+			keyringControls.update();
+
+			const keyringHemisphere = new THREE.HemisphereLight(0xffffff, 0xffffff, 4);
+			keyringScene.add(keyringHemisphere);
+
+			const keyringDirectional = new THREE.DirectionalLight(0xffffff, 1);
+			keyringDirectional.castShadow = true;
+			keyringDirectional.shadow.mapSize.width = 2048;
+			keyringDirectional.shadow.mapSize.height = 2048;
+			keyringScene.add(keyringDirectional);
+
+			const keyringDirectional2 = new THREE.DirectionalLight(0xffffff, 1);
+			keyringDirectional2.castShadow = true;
+			keyringDirectional2.shadow.mapSize.width = 2048;
+			keyringDirectional2.shadow.mapSize.height = 2048;
+			keyringScene.add(keyringDirectional2);
+
+			function resizeKeyringCanvasToDisplaySize() {
+				const canvas = keyringRenderer.domElement;
+				const width = canvas.clientWidth;
+				const height = canvas.clientHeight;
+				if (canvas.width !== width || canvas.height !== height) {
+					keyringRenderer.setSize(width, height, false);
+					keyringRenderer.setPixelRatio(window.devicePixelRatio);
+					keyringCamera.aspect = width / height;
+					keyringCamera.updateProjectionMatrix();
+				}
+			}
+
+			function parseKeyringObject(object: THREE.Group<THREE.Object3DEventMap>) {
+				object = object as THREE.Group<THREE.Object3DEventMap> & { children: THREE.Mesh[] };
+
+				object.rotation.x = THREE.MathUtils.degToRad(-90);
+
+				const aabb = new THREE.Box3().setFromObject(object);
+				const center = aabb.getCenter(new THREE.Vector3());
+
+				object.position.x += object.position.x - center.x;
+				object.position.y += object.position.y - center.y;
+				object.position.z += object.position.z - center.z;
+
+				keyringControls.reset();
+
+				var box = new THREE.Box3().setFromObject(object);
+				const size = new THREE.Vector3();
+				box.getSize(size);
+				const largestDimension = Math.max(size.x, size.y, size.z);
+
+				keyringCamera.position.z = largestDimension * 0.3;
+				keyringCamera.position.y = largestDimension * 1.38;
+
+				keyringDirectional.position.set(
+					largestDimension * 2,
+					largestDimension * 2,
+					largestDimension * 2
+				);
+				keyringDirectional2.position.set(
+					-largestDimension * 2,
+					largestDimension * 2,
+					-largestDimension * 2
+				);
+
+				keyringCamera.near = largestDimension * 0.001;
+				keyringCamera.far = largestDimension * 10;
+				keyringCamera.updateProjectionMatrix();
+
+				const edgeLines: { lines: THREE.LineSegments; mesh: THREE.Mesh }[] = [];
+
+				object.traverse(function (child) {
+					child.castShadow = true;
+					child.receiveShadow = true;
+
+					const mesh = child as THREE.Mesh;
+
+					const edges = new THREE.EdgesGeometry(mesh.geometry);
+					const lines = new THREE.LineSegments(
+						edges,
+						new THREE.LineBasicMaterial({
+							color: 0xf3dcc6,
+							linewidth: 1,
+							polygonOffset: true,
+							polygonOffsetFactor: -1,
+							polygonOffsetUnits: -1
+						})
+					);
+
+					lines.position.copy(mesh.position);
+					lines.rotation.copy(mesh.rotation);
+
+					edgeLines.push({ lines, mesh });
+				});
+
+				edgeLines.forEach(({ lines, mesh }) => {
+					mesh.add(lines);
+				});
+
+				keyringScene.add(object);
+			}
+
+			var objLoader = new OBJLoader();
+
+			objLoader.load(
+				keyringModel,
+				parseKeyringObject,
+				(xhr) => {
+					console.log('Keyring: ' + (xhr.loaded / xhr.total) * 100 + '% loaded');
+				},
+				(error) => {
+					console.error('Keyring error:', error);
+				}
+			);
+
+			const animateKeyring = function () {
+				requestAnimationFrame(animateKeyring);
+				keyringControls.update();
+				keyringRenderer.render(keyringScene, keyringCamera);
+				resizeKeyringCanvasToDisplaySize();
+			};
+			animateKeyring();
+		}, 100);
+	});
 </script>
 
 <Head title="" />
+
+{#if !showStickersSection}
+	<button
+		class="button md fixed top-4 right-4 z-50 border-3 border-orange-900 bg-orange-800 outline-orange-50 transition-all hover:scale-105 hover:bg-orange-700 animate-[bounce_2.5s_ease-in-out_infinite]"
+		style="transform: rotate(-2deg);"
+		onclick={() => (showStickersSection = !showStickersSection)}
+	>
+		Free swag!
+	</button>
+{/if}
+
+{#if showStickersSection}
+	<div
+			class="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-70 p-4"
+			role="dialog"
+			aria-modal="true"
+			tabindex="0"
+			onclick={(e) => {
+				if (e.target === e.currentTarget) {
+					showStickersSection = false;
+				}
+			}}
+			onkeydown={(e) => e.key === 'Escape' && (showStickersSection = false)}
+	>
+		<div
+				class="relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-lg border-3 border-primary-900 bg-primary-950 p-8 shadow-2xl"
+				role="document"
+				tabindex="-1"
+		>
+			<button
+				class="button sm absolute top-4 right-4 z-10 border-2 border-primary-900 bg-primary-800 outline-primary-50 hover:bg-primary-700"
+				onclick={() => (showStickersSection = false)}
+				aria-label="Close dialog"
+			>
+				Close
+			</button>
+
+			<div class="mx-auto max-w-4xl">
+				<div class="mb-8 text-center">
+					<h2 class="mb-2 text-2xl font-bold sm:text-3xl">
+						Free swag with your first submission
+					</h2>
+					<p class="text-lg font-medium text-primary-300">
+						Ship a project, get exclusive Construct goodies
+					</p>
+				</div>
+
+				<div class="grid gap-6 sm:grid-cols-2">
+					<div class="themed-box p-6">
+						<div class="mb-4 flex h-56 items-center justify-center gap-3 overflow-hidden rounded-lg border-2 border-primary-900 bg-primary-900">
+							<img
+								src={sticker1Image}
+								alt="Construct sticker 1"
+								class="h-40 w-40 animate-[spin_20s_linear_infinite] object-contain"
+								style="animation-direction: normal;"
+							/>
+							<img
+								src={sticker2Image}
+								alt="Construct sticker 2"
+								class="h-40 w-40 animate-[spin_20s_linear_infinite] object-contain"
+								style="animation-direction: reverse;"
+							/>
+						</div>
+						<div class="text-center">
+							<h3 class="mb-2 text-xl font-bold">Sticker Pack</h3>
+							<p class="text-sm text-primary-300">
+								Sticker 1 and Sticker 2—both included
+							</p>
+						</div>
+					</div>
+
+					<div class="themed-box p-6">
+						<div class="mb-4 flex h-56 items-center justify-center overflow-hidden rounded-lg border-2 border-primary-900 bg-primary-900">
+							<canvas class="h-full w-full" width="200" height="200" id="keyring-canvas"></canvas>
+						</div>
+						<div class="text-center">
+							<h3 class="mb-2 text-xl font-bold">3D Keychain</h3>
+							<p class="text-sm text-primary-300">
+								Custom 3D printed keychain
+							</p>
+						</div>
+					</div>
+				</div>
+
+				<div class="themed-box mt-6 p-6 text-center">
+					<p class="font-medium">
+						<strong>How it works:</strong> Submit your first CAD project and we'll mail these to you—completely free!
+					</p>
+				</div>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <OrpheusFlag />
 
@@ -269,70 +525,42 @@
 
 <Rules idvDomain={data.idvDomain} />
 
-	<div class="mt-20 flex flex-col items-center justify-center px-10">
-		<h1 class="mb-3 text-center text-2xl font-bold sm:text-4xl">Frequently asked questions</h1>
-		<div class="w-full max-w-2xl">
-			<Accordion text="Is this free?">
-				<p>
-					Yes! This program is entirely funded by <a href="https://hackclub.com" class="underline">
-						Hack Club
-					</a>, a US-based 501(c)(3) charity helping teens learn how to design and code, with sponsors
-					such as <a href="https://github.com" class="underline">GitHub</a>.
-				</p>
-			</Accordion>
+<div class="mt-20 flex flex-col items-center justify-center px-10">
+	<h1 class="mb-3 text-center text-2xl font-bold sm:text-4xl">Frequently asked questions</h1>
+	<div class="w-full max-w-2xl">
+		<Accordion text="Is this free?">
+			<p>
+				Yes! This program is entirely funded by <a href="https://hackclub.com" class="underline">
+					Hack Club
+				</a>, a US-based 501(c)(3) charity helping teens learn how to design and code, with sponsors
+				such as <a href="https://github.com" class="underline">GitHub</a>.
+			</p>
+		</Accordion>
+		<Accordion text="What can I make?">
+			<p>
+				Any reasonable CAD project is fine, get creative! However, you must use one of the <a
+					href="/approved-editors"
+					class="underline">approved editors</a
+				>.
+			</p>
+		</Accordion>
+		<Accordion text="What are the requirements to get a 3D printer?">
+			<p>You must ship at least 40 hours' worth of projects by the end of the event.</p>
+		</Accordion>
+		<Accordion text="What are the requirements to participate?">
+			<p>
+				You must be between the ages 13-18 and have verified your identity on our <a
+					href={`https://${data.idvDomain}`}
+					class="underline"
+				>
+					identity platform
+				</a>.
+			</p>
+		</Accordion>
+	</div>
+</div>
 
-			<Accordion text="What can I make?">
-				<p>
-					Anything created with 3D modelling CAD software! Keychains, models, art, or even functional parts. You can include hardware (bearings, motors, PCBs) at your own cost. However, you must use one of the <a href="/approved-editors" class="underline">approved editors</a>.
-				</p>
-			</Accordion>
-
-			<Accordion text="What are the requirements to get a 3D printer?">
-				<p>Accumulate 40 clay (earned at 1 per hour journaled). That's enough to buy a base 3D printer.</p>
-			</Accordion>
-
-			<Accordion text="What are the requirements to participate?">
-				<p>
-					You must be 13-18 years old and have verified your identity on our <a
-						href={`https://${data.idvDomain}`}
-						class="underline"
-					>
-						identity platform
-					</a>. You also need to be part of the <a href="https://hackclub.com/slack/" class="underline">Hack Club Slack</a>.
-				</p>
-			</Accordion>
-			<Accordion text="How do I earn prizes?">
-				<p>
-					Earn 1 clay bag per hour you work and journal. Clay is the currency to buy a 3D printer—the cheapest is 40 clay! After you buy a printer, you'll earn 12 bricks per hour instead, which you can use to upgrade or buy from the Brick Shop.
-				</p>
-			</Accordion>
-			<Accordion text="How do I track my time?">
-				<p>
-					Use the journaling feature on your project page. Each entry caps at 2 hours, and you can only log time that's actually elapsed since your last entry. If you lose hours, we can't recover them.
-				</p>
-			</Accordion>
-			<Accordion text="Do I have to build my project?">
-				<p class="mb-2">
-					Yes! Two options:
-				</p>
-				<ul class="list-inside list-disc space-y-1 text-sm">
-					<li><strong>We print for you:</strong> Cost deducted from earnings (best for 3D-only projects)</li>
-					<li><strong>You build it:</strong> At your own cost (good for hardware + CAD combos)</li>
-				</ul>
-			</Accordion>
-			<Accordion text="Can I work on multiple projects?">
-				<p>
-					Yes, as long as each meets the 2-hour minimum. You can also continue working on existing projects (only hours logged after Construct starts count).
-				</p>
-			</Accordion>
-
-			<Accordion text="What happens if I commit hour inflation?">
-				<p>
-					It's not tolerated in Hack Club. You'll face indefinite ban from Construct and all future YSWS programs. If you believe you were banned unfairly, DM @Fraud Squad on Slack to appeal. Please don't fraud—it takes attention away from people doing honest work.
-				</p>
-			</Accordion>
-		</div>
-	</div><div class="mt-15 mb-30 flex flex-col items-center justify-center gap-5 px-10">
+<div class="mt-15 mb-30 flex flex-col items-center justify-center gap-5 px-10">
 	<h1 class="text-center text-3xl font-bold sm:text-4xl">Ready?</h1>
 	<div class="w-full max-w-2xl text-center">
 		{#if data.loggedIn}
