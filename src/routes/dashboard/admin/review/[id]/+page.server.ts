@@ -136,29 +136,21 @@ export const actions = {
 		switch (action) {
 			case 'approve':
 				status = 't1_approved';
-				statusMessage = 'approved';
+				statusMessage = 'approved! :woah-dino:';
 				break;
 			case 'approve_no_print':
 				status = 'printed';
-				statusMessage = 'approved (no print)';
+				statusMessage = 'approved (no printing required)! :woah-dino:';
 				break;
 			case 'reject':
 				status = 'rejected';
-				statusMessage = 'rejected';
+				statusMessage = "rejected. :sad_pepe:\nYou can still re-ship this when you're ready.";
 				break;
 			case 'reject_lock':
 				status = 'rejected_locked';
-				statusMessage = 'rejected (locked)';
+				statusMessage = "rejected.\nYou can't re-ship this project.";
 				break;
 		}
-
-		if (status)
-			await db
-				.update(project)
-				.set({
-					status
-				})
-				.where(eq(project.id, id));
 
 		const [projectUser] = await db
 			.select({
@@ -167,12 +159,21 @@ export const actions = {
 			.from(user)
 			.where(eq(user.id, queriedProject.userId));
 
-		if (projectUser) {
-			const feedbackText = feedback ? `\n\nFeedback from reviewer:\n${feedback}` : '';
-			const encouragement = statusMessage === 'rejected' ? ' You can try again whenever you\'re ready.' : statusMessage === 'rejected (locked)' ? ' Unfortunately, you can\'t resubmit this project. This decision is final. ' : ' Great work! :tada:';
+		if (projectUser && status) {
+			await db
+				.update(project)
+				.set({
+					status
+				})
+				.where(eq(project.id, id));
+
+			const feedbackText = feedback
+				? `\n\nHere's what they said about your project:\n${feedback}`
+				: '';
+
 			await sendSlackDM(
 				projectUser.slackId,
-				`Hiya :wave: Your project <https://construct.hackclub.com/dashboard/projects/${queriedProject.id}|${queriedProject.name}> has been ${statusMessage}!${feedbackText}${encouragement}`
+				`Your project <https://construct.hackclub.com/dashboard/projects/${queriedProject.id}|${queriedProject.name}> has been ${statusMessage}${feedbackText}`
 			);
 		}
 
