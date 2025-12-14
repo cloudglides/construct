@@ -10,6 +10,7 @@
 	import { enhance } from '$app/forms';
 	import Head from '$lib/components/Head.svelte';
 	import ThreeMFPreview from '$lib/components/ThreeMFPreview.svelte';
+	import ProjectLinks from '$lib/components/ProjectLinks.svelte';
 
 	const clamp = (num: number, min: number, max: number) => Math.min(Math.max(num, min), max);
 
@@ -57,35 +58,15 @@
 		</p>
 		<p class="mt-0.5">Status: {projectStatuses[data.project.status]}</p>
 
-		<div class="my-2 flex flex-row gap-2">
-			{#if data.project.url && data.project.url.length > 0}
-				<div class="flex">
-					<a class="button sm primary" href={data.project.url} target="_blank">
-						<ExternalLink />
-						Printables page
-					</a>
-				</div>
-			{/if}
-			{#if data.project.editorFileType === 'upload'}
-				<div class="flex">
-					<a
-						class="button sm primary"
-						href={`${data.s3PublicUrl}/${data.project.uploadedFileUrl}`}
-						target="_blank"
-					>
-						<Download />
-						Project file
-					</a>
-				</div>
-			{:else if data.project.editorFileType === 'url'}
-				<div class="flex">
-					<a class="button sm primary" href={data.project.editorUrl} target="_blank">
-						<Link />
-						Project link
-					</a>
-				</div>
-			{/if}
+		<div class="my-2">
+			<ProjectLinks
+				url={data.project.url}
+				editorFileType={data.project.editorFileType}
+				editorUrl={data.project.editorUrl}
+				uploadedFileUrl={data.project.uploadedFileUrl}
+			/>
 		</div>
+
 		<p class="mt-2">
 			{#each data.project.description?.split('\n') as descriptionSection}
 				{descriptionSection}

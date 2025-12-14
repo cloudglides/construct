@@ -5,6 +5,7 @@
 	import { ExternalLink } from '@lucide/svelte';
 	import { enhance } from '$app/forms';
 	import { projectStatuses } from '$lib/utils.js';
+	import ProjectLinks from '$lib/components/ProjectLinks.svelte';
 
 	let { data } = $props();
 
@@ -36,15 +37,13 @@
 							.project.timeSpent % 60}min
 					</p>
 					<p>Status: {projectStatuses[data.project.project.status]}</p>
-					<div class="mt-1 flex">
-						{#if data.project.project.url && data.project.project.url.length > 0}
-							<a class="button sm primary" href={data.project.project.url} target="_blank">
-								<ExternalLink />
-								Printables page
-							</a>
-						{:else}
-							<p class="font-bold">No Printables link</p>
-						{/if}
+					<div class="mt-1">
+						<ProjectLinks
+							url={data.project.project.url}
+							editorFileType={data.project.project.editorFileType}
+							editorUrl={data.project.project.editorUrl}
+							uploadedFileUrl={data.project.project.uploadedFileUrl}
+						/>
 					</div>
 				</div>
 
@@ -113,7 +112,11 @@
 
 					<label class="flex flex-col gap-1">
 						<span class="font-medium">Feedback <span class="opacity-50">(public)</span></span>
-						<textarea name="feedback" class="themed-input-on-box">{data.t1Reviews.length > 0 ? data.t1Reviews[data.t1Reviews.length - 1].feedback : ''}</textarea>
+						<textarea name="feedback" class="themed-input-on-box"
+							>{data.t1Reviews.length > 0
+								? data.t1Reviews[data.t1Reviews.length - 1].feedback
+								: ''}</textarea
+						>
 					</label>
 
 					<button type="submit" class="button md primary w-full" disabled={formPending}>

@@ -21,7 +21,13 @@ export async function load({ locals, params }) {
 				id: project.id,
 				name: project.name,
 				description: project.description,
+
 				url: project.url,
+				editorFileType: project.editorFileType,
+				editorUrl: project.editorUrl,
+				uploadedFileUrl: project.uploadedFileUrl,
+				modelFile: project.modelFile,
+
 				createdAt: project.createdAt,
 				updatedAt: project.updatedAt,
 				status: project.status
@@ -45,6 +51,10 @@ export async function load({ locals, params }) {
 			project.name,
 			project.description,
 			project.url,
+			project.editorFileType,
+			project.editorUrl,
+			project.uploadedFileUrl,
+			project.modelFile,
 			project.createdAt,
 			project.status,
 			user.id,
