@@ -73,7 +73,12 @@
 
 				<div>
 					<h2 class="text-lg font-bold">Description</h2>
-					<p>{data.project.project.description}</p>
+					<p>
+						{#each data.project.project.description?.split('\n') as descriptionSection}
+							{descriptionSection}
+							<br />
+						{/each}
+					</p>
 				</div>
 			</div>
 
