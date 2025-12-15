@@ -83,6 +83,8 @@ export const project = pgTable('project', {
 	status: projectStatusEnum().notNull().default('building'),
 	printedBy: integer().references(() => user.id),
 
+	submittedToAirtable: boolean().default(false),
+	
 	deleted: boolean().notNull().default(false), // Projects aren't actually deleted, just marked as deleted (I cba to deal with foreign key delete issues for audit logs)
 
 	createdAt: timestamp().notNull().defaultNow(),
