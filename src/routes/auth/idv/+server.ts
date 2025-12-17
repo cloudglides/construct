@@ -5,12 +5,15 @@ import { redirect } from '@sveltejs/kit';
 export function GET({ url }) {
 	// const state = crypto.randomBytes(32).toString('hex');
 	// cookies.set('oauth_state', state, { path: '/', maxAge: 600 });
+	const scopes = env.AIRTABLE_TOKEN
+		? 'slack_id basic_info address'
+		: 'name slack_id verification_status';
 
 	const redirectURL = new URL(`https://${env.IDV_DOMAIN}/oauth/authorize`);
 	redirectURL.searchParams.set('client_id', env.IDV_CLIENT_ID ?? '');
 	redirectURL.searchParams.set('redirect_uri', `${url.protocol}//${url.host}/auth/callback`);
 	redirectURL.searchParams.set('response_type', 'code');
-	redirectURL.searchParams.set('scope', 'name slack_id verification_status');
+	redirectURL.searchParams.set('scope', scopes);
 	// redirectURL.searchParams.set('state', state);
 
 	return redirect(302, redirectURL);

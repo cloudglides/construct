@@ -1,4 +1,4 @@
-import { AirtableTs } from 'airtable-ts';
+import Airtable from 'airtable';
 import { env } from '$env/dynamic/private';
 
-export const airtableDB = env.AIRTABLE_TOKEN ? new AirtableTs({ apiKey: env.AIRTABLE_TOKEN }) : null;
+if (env.AIRTABLE_TOKEN) Airtable.configure({ apiKey: env.AIRTABLE_TOKEN });
