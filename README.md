@@ -45,7 +45,7 @@ npm run db:studio
 
 ## Deploying
 
-Create a `.env` file containing all the required credentials, look at `.env.example` for an example.
+Create a `.env` file containing all the required credentials, look at `.env.example` for an example. If you pass in Airtable tokens, the app must be marked as `hq_official` on idv.
 
 Use the `docker-compose.yaml` file to deploy it.
 
