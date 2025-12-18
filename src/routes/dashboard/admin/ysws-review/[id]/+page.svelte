@@ -8,7 +8,7 @@
 	import Spinny3DPreview from '$lib/components/Spinny3DPreview.svelte';
 	import { Download } from '@lucide/svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 
 	let formPending = $state(false);
 </script>
@@ -112,7 +112,7 @@
 					use:enhance={() => {
 						formPending = true;
 						return async ({ update }) => {
-							await update();
+							await update({ reset: false });
 							formPending = false;
 						};
 					}}
@@ -131,6 +131,10 @@
 						<span class="font-medium">Feedback <span class="opacity-50">(public)</span></span>
 						<textarea name="feedback" class="themed-input-on-box"></textarea>
 					</label>
+
+					{#if form?.message}
+						<p>{form?.message}</p>
+					{/if}
 
 					<button type="submit" class="button md primary w-full" disabled={formPending}>
 						Submit to Airtable!

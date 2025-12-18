@@ -1,11 +1,13 @@
 import { db } from '$lib/server/db/index.js';
 import { project, user, devlog, t1Review, t2Review } from '$lib/server/db/schema.js';
-import { error, redirect } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { eq, and, asc, sql, desc } from 'drizzle-orm';
 import type { Actions } from './$types';
 import { sendSlackDM } from '$lib/server/slack.js';
 import { airtableBase } from '$lib/server/airtable';
 import { env } from '$env/dynamic/private';
+import { decrypt } from '$lib/server/encryption';
+import { getUserData } from '$lib/server/idvUserData';
 
 export async function load({ locals, params }) {
 	if (!locals.user) {
@@ -182,6 +184,26 @@ export const actions = {
 				.orderBy(desc(devlog.createdAt))
 				.limit(1);
 
+			if (!locals.user.idvToken) {
+				return fail(400, {
+					message: 'IDV token revoked/expired, ask them to reauthenticate'
+				});
+			}
+
+			const token = decrypt(locals.user.idvToken);
+			let userData;
+
+			try {
+				userData = await getUserData(token);
+			} catch {
+				return fail(400, {
+					message: 'IDV token revoked/expired, ask them to reauthenticate'
+				});
+			}
+			const { first_name, last_name, primary_email, birthday, addresses } = userData;
+
+			const address = addresses.find((address: { primary: boolean; }) => address.primary);
+
 			const repoUrl =
 				queriedProject.project.editorFileType === 'upload'
 					? `${env.S3_PUBLIC_URL}/${queriedProject.project.uploadedFileUrl}`
@@ -197,6 +219,17 @@ export const actions = {
 				'Repository URL': repoUrl ?? '',
 				'Demo URL': queriedProject.project.url ?? '',
 				Description: queriedProject.project.description ?? '',
+
+				'First Name': first_name ?? '',
+				'Last Name': last_name ?? '',
+				'Email': primary_email ?? '',
+				'Birthday': birthday ?? '',
+				'Address (Line 1)': address?.line_1 ?? '',
+				'City': address?.city ?? '',
+				'State / Province': address?.state ?? '',
+				'Country': address?.country ?? '',
+				'ZIP / Postal Code': address?.postal_code ?? '',
+
 				'Hours estimate': queriedProject.timeSpent / 60,
 				'Optional - Override Hours Spent': queriedProject.timeSpent / 60,
 				'Optional - Override Hours Spent Justification': notes

@@ -53,6 +53,7 @@
 		"@sentry/sveltekit": "^10.29.0",
 		"airtable": "^0.12.2",
 		"cron": "^4.3.4",
+		"cryptr": "^6.4.0",
 		"drizzle-kit": "^0.31.7",
 		"drizzle-orm": "^0.44.7",
 		"express": "^5.1.0",

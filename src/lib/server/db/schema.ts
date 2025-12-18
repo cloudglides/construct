@@ -15,6 +15,7 @@ export const trustEnum = pgEnum('trust', ['green', 'blue', 'yellow', 'red']);
 export const user = pgTable('user', {
 	id: serial().primaryKey(), // User ID
 	idvId: text().notNull().unique(), // IDV ID
+	idvToken: text(), // IDV token (stored encrypted)
 	slackId: text().notNull().unique(), // Slack ID
 	profilePicture: text().notNull(), // Profile pic URL
 	name: text().notNull(), // Username on Slack

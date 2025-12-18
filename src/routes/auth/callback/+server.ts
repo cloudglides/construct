@@ -10,6 +10,8 @@ import {
 	setSessionTokenCookie,
 	generateSessionToken
 } from '$lib/server/auth.js';
+import { encrypt } from '$lib/server/encryption.js';
+import { getUserData } from '$lib/server/idvUserData';
 
 export async function GET(event) {
 	const url = event.url;
@@ -42,31 +44,15 @@ export async function GET(event) {
 	const token = (await tokenRes.json()).access_token;
 
 	// Get user data
-	const userDataURL = new URL(`https://${env.IDV_DOMAIN}/api/v1/me`);
-	const userDataRes = await fetch(userDataURL, {
-		method: 'GET',
-		headers: {
-			Authorization: `Bearer ${token}`
-		}
-	});
+	let userData;
 
-	if (!userDataRes.ok) {
+	try {
+		userData = await getUserData(token);
+	} catch {
 		return redirect(302, '/auth/failed');
 	}
 
-	const userDataJSON = await userDataRes.json();
-
-	const {
-		id,
-		slack_id,
-		ysws_eligible
-		// verification_status
-	}: {
-		id: string;
-		slack_id: string;
-		ysws_eligible: boolean;
-		// verification_status: string;
-	} = userDataJSON['identity'];
+	const { id, slack_id, ysws_eligible } = userData;
 
 	if (!ysws_eligible) {
 		return redirect(302, '/auth/ineligible');
@@ -175,6 +161,7 @@ export async function GET(event) {
 		await db
 			.update(user)
 			.set({
+				idvToken: encrypt(token),
 				name: username,
 				profilePicture: profilePic,
 				lastLoginAt: new Date(Date.now()),
@@ -186,6 +173,7 @@ export async function GET(event) {
 		// Create user
 		await db.insert(user).values({
 			idvId: id,
+			idvToken: encrypt(token),
 			slackId: slack_id,
 			name: username,
 			profilePicture: profilePic,
