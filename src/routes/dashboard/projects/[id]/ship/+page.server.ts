@@ -227,7 +227,7 @@ export const actions = {
 					or(eq(project.status, 'building'), eq(project.status, 'rejected'))
 				)
 			)
-			.groupBy(project.id, project.description, project.url)
+			.groupBy(project.id, project.name, project.description, project.url)
 			.limit(1);
 
 		if (!queriedProject) {
