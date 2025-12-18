@@ -11,6 +11,7 @@ import { env } from '$env/dynamic/private';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { S3 } from '$lib/server/s3';
 import { ship } from '$lib/server/db/schema.js';
+import { sanitizeUrl } from '@braintree/sanitize-url';
 
 export async function load({ params, locals }) {
 	const id: number = parseInt(params.id);
@@ -79,11 +80,14 @@ export const actions = {
 		const editorFile = data.get('editor_file') as File;
 		const modelFile = data.get('model_file') as File;
 
+		const printablesUrlString =
+			printablesUrl && printablesUrl.toString() ? sanitizeUrl(printablesUrl.toString()) : null;
+
 		const printablesUrlValid =
-			printablesUrl &&
-			printablesUrl.toString() &&
-			printablesUrl.toString().trim().length < 8000 &&
-			isValidUrl(printablesUrl.toString().trim());
+			printablesUrlString &&
+			printablesUrlString.trim().length < 8000 &&
+			isValidUrl(printablesUrlString.trim()) &&
+			printablesUrlString !== 'about:blank';
 
 		if (!printablesUrlValid) {
 			return fail(400, {
@@ -91,7 +95,7 @@ export const actions = {
 			});
 		}
 
-		const printablesUrlObj = new URL(printablesUrl.toString().trim());
+		const printablesUrlObj = new URL(printablesUrlString.trim());
 
 		const pathMatch = printablesUrlObj.pathname.match(/\/model\/(\d+)/);
 		const modelId = pathMatch ? pathMatch[1] : '';
@@ -154,12 +158,13 @@ export const actions = {
 
 		// Editor URL
 		const editorUrlExists = editorUrl && editorUrl.toString();
-		const editorUrlValid =
-			editorUrlExists &&
-			editorUrl.toString().trim().length < 8000 &&
-			isValidUrl(editorUrl.toString().trim());
 
-		if (editorUrlExists && !editorUrlValid) {
+		const editorUrlString = editorUrlExists ? sanitizeUrl(editorUrl.toString()) : null;
+
+		const editorUrlValid =
+			editorUrlString && editorUrlString.trim().length < 8000 && isValidUrl(editorUrlString.trim());
+
+		if (editorUrlExists && (!editorUrlValid || editorUrlString === 'about:blank')) {
 			return fail(400, {
 				invalid_editor_url: true
 			});
@@ -222,7 +227,7 @@ export const actions = {
 					or(eq(project.status, 'building'), eq(project.status, 'rejected'))
 				)
 			)
-			.groupBy(project.id, project.description, project.url)
+			.groupBy(project.id, project.name, project.description, project.url)
 			.limit(1);
 
 		if (!queriedProject) {
@@ -232,6 +237,11 @@ export const actions = {
 		// Make sure it has at least 2h
 		if (queriedProject.timeSpent < 120) {
 			return error(400, { message: 'minimum 2h needed to ship' });
+		}
+
+		// Make sure it has at least 2 devlogs
+		if (queriedProject.devlogCount < 2) {
+			return error(400, { message: 'minimum 2 journal logs required to ship' });
 		}
 
 		if (queriedProject.description == '') {
@@ -264,9 +274,9 @@ export const actions = {
 			.update(project)
 			.set({
 				status: 'submitted',
-				url: printablesUrl.toString(),
+				url: printablesUrlString,
 				editorFileType: editorUrlExists ? 'url' : 'upload',
-				editorUrl: editorUrlExists ? editorUrl.toString() : undefined,
+				editorUrl: editorUrlExists ? editorUrlString : undefined,
 				uploadedFileUrl: editorFileExists ? editorFilePath : undefined,
 
 				modelFile: modelPath
@@ -282,10 +292,10 @@ export const actions = {
 		await db.insert(ship).values({
 			userId: locals.user.id,
 			projectId: queriedProject.id,
-			url: printablesUrl.toString(),
+			url: printablesUrlString,
 
 			editorFileType: editorUrlExists ? 'url' : 'upload',
-			editorUrl: editorUrlExists ? editorUrl.toString() : undefined,
+			editorUrl: editorUrlExists ? editorUrlString : undefined,
 			uploadedFileUrl: editorFileExists ? editorFilePath : undefined,
 
 			modelFile: modelPath

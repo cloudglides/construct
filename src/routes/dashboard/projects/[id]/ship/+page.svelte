@@ -156,6 +156,9 @@
 		<ChecklistItem completed={data.project.timeSpent >= 120}
 			>At least 120 minutes spent</ChecklistItem
 		>
+		<ChecklistItem completed={data.project.devlogCount >= 2}
+			>At least 2 journal logs</ChecklistItem
+		>
 		<ChecklistItem completed={data.project.description != ''}>
 			Project has a description
 		</ChecklistItem>
@@ -191,6 +194,7 @@
 			class="button sm orange"
 			disabled={formPending ||
 				data.project.timeSpent < 120 ||
+				data.project.devlogCount < 2 ||
 				data.project.description == '' ||
 				!printablesUrl ||
 				!hasEditorFile ||
