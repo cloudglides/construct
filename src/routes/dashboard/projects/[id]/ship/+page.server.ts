@@ -234,6 +234,11 @@ export const actions = {
 			return error(400, { message: 'minimum 2h needed to ship' });
 		}
 
+		// Make sure it has at least 2 devlogs
+		if (queriedProject.devlogCount < 2) {
+			return error(400, { message: 'minimum 2 journal logs required to ship' });
+		}
+
 		if (queriedProject.description == '') {
 			return error(400, { message: 'project must have a description' });
 		}
