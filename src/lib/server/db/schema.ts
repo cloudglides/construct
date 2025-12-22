@@ -29,6 +29,7 @@ export const user = pgTable('user', {
 	shopScore: real().notNull().default(0),
 
 	hasBasePrinter: boolean().notNull().default(false),
+	// bricksSpentOnUpgrades: integer().notNull().default(0),
 
 	hasT1Review: boolean().notNull().default(false), // Has access to t1 review
 	hasT2Review: boolean().notNull().default(false), // Has access to t2 review
@@ -203,6 +204,89 @@ export const devlog = pgTable('devlog', {
 	updatedAt: timestamp().notNull().defaultNow()
 });
 
+// Market
+
+export const marketItem = pgTable('market_item', {
+	id: serial().primaryKey(),
+	createdBy: integer().references(() => user.id),
+
+	name: text().notNull(),
+	description: text().notNull(),
+	image: text().notNull(),
+	
+	minRequiredShopScore: integer().notNull().default(0),
+	
+	minShopScore: integer().notNull(),
+	maxShopScore: integer().notNull(), // Score after which price becomes constant
+	maxPrice: integer().notNull(),
+	minPrice: integer().notNull(),
+	
+	isPublic: boolean().notNull().default(false),
+	
+	deleted: boolean().notNull().default(false),
+	createdAt: timestamp().notNull().defaultNow(),
+	updatedAt: timestamp().notNull().defaultNow()
+});
+
+export const marketOrderStatus = pgEnum('market_order_status', [
+	'awaiting_approval',
+	'approved',
+	'fulfilled'
+]);
+
+export const marketItemOrder = pgTable('market_item_order', {
+	id: serial().primaryKey(),
+	userId: integer().references(() => user.id),
+
+	addressId: text().notNull(),
+	bricksPaid: integer().notNull(),
+	
+	status: marketOrderStatus().notNull().default('awaiting_approval'),
+	userNotes: text().notNull(),
+	notes: text().notNull(),
+
+	deleted: boolean().notNull().default(false),
+	createdAt: timestamp().notNull().defaultNow()
+});
+
+// export const marketBasePrinter = pgTable('market_base_printer', {
+// 	id: serial().primaryKey(),
+// 	createdBy: integer().references(() => user.id),
+
+// 	name: text().notNull(),
+// 	description: text().notNull(),
+// 	image: text().notNull(),
+
+// 	minRequiredShopScore: integer().notNull().default(0),
+// 	isPublic: boolean().notNull().default(false),
+
+// 	deleted: boolean().notNull().default(false),
+// 	createdAt: timestamp().notNull().defaultNow(),
+// 	updatedAt: timestamp().notNull().defaultNow()
+// });
+
+// export const marketPrinterUpgrade = pgTable('market_printer_upgrade', {
+// 	id: serial().primaryKey(),
+// 	createdBy: integer().references(() => user.id),
+
+// 	name: text().notNull(),
+// 	description: text().notNull(),
+// 	image: text().notNull(),
+
+// 	minRequiredShopScore: integer().notNull().default(0),
+
+// 	minShopScore: integer().notNull(),
+// 	maxShopScore: integer().notNull(), // Score after which price becomes constant
+// 	maxPrice: integer().notNull(),
+// 	minPrice: integer().notNull(),
+
+// 	isPublic: boolean().notNull().default(false),
+
+// 	deleted: boolean().notNull().default(false),
+// 	createdAt: timestamp().notNull().defaultNow(),
+// 	updatedAt: timestamp().notNull().defaultNow()
+// });
+
 export type Session = typeof session.$inferSelect;
 export type User = typeof user.$inferSelect;
 export type Project = typeof project.$inferSelect;
@@ -210,3 +294,5 @@ export type Project = typeof project.$inferSelect;
 export type T1Review = typeof t1Review.$inferSelect;
 export type LegionReview = typeof legionReview.$inferSelect;
 export type T2Review = typeof t2Review.$inferSelect;
+
+export type MarketItem = typeof marketItem.$inferSelect;
