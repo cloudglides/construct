@@ -1,5 +1,6 @@
 import { db } from '$lib/server/db/index.js';
 import { marketItem } from '$lib/server/db/schema.js';
+import { calculateMarketPrice } from '$lib/utils';
 import { error } from '@sveltejs/kit';
 import { eq, and } from 'drizzle-orm';
 
@@ -21,40 +22,23 @@ export async function load({ locals }) {
 			minRequiredShopScore: marketItem.minRequiredShopScore
 		})
 		.from(marketItem)
-		.where(
-			and(
-				eq(marketItem.deleted, false),
-				locals.user.hasAdmin ? undefined : eq(marketItem.isPublic, true)
-			)
-		)
+		.where(and(eq(marketItem.deleted, false), eq(marketItem.isPublic, true)))
 		.orderBy(marketItem.maxPrice);
 
-	const shopScore = Number(locals.user?.shopScore || 0);
+	const shopScore = locals.user.shopScore;
+
 	const marketItemsWithPrice = marketItems
 		.map((item) => {
-			const max = Number(item.maxPrice || 0);
-			const min = Number(item.minPrice || 0);
-			const diff = Math.max(0, max - min);
+			const computedPrice = calculateMarketPrice(
+				item.minPrice,
+				item.maxPrice,
+				item.minShopScore,
+				item.maxShopScore,
+				shopScore
+			);
 
-			const minShop = Number(item.minShopScore || 0);
-			const maxShop = Number(item.maxShopScore || 0);
-			let discountPercent = 0;
-			if (maxShop > minShop) {
-				discountPercent = (shopScore - minShop) / (maxShop - minShop);
-				discountPercent = Math.max(0, Math.min(1, discountPercent));
-			} else {
-				discountPercent = 0;
-			}
-
-			const discountAmount = diff * discountPercent;
-			const rawPrice = Math.ceil(max - discountAmount);
-			const computedPrice = Math.max(rawPrice, min);
-			return { ...item, computedPrice };
-		})
-		.filter((item) => {
-			if (locals.user?.hasAdmin) return true;
-			const minReq = Number(item.minRequiredShopScore || 0);
-			return shopScore >= minReq;
+			const discountAmount = 1 - computedPrice / item.maxPrice;
+			return { ...item, computedPrice, discountAmount };
 		})
 		.sort((a, b) => a.computedPrice - b.computedPrice);
 

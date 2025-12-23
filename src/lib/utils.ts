@@ -55,3 +55,26 @@ export default function fileSizeFromUrl(url: string): Promise<number> {
 export function formatMinutes(mins: number | null) {
 	return Math.floor((mins ?? 0) / 60) + 'h ' + Math.floor((mins ?? 0) % 60) + 'min';
 }
+
+export function calculateMarketPrice(
+	minPrice: number,
+	maxPrice: number,
+	minShopScore: number,
+	maxShopScore: number,
+	userShopScore: number
+) {
+	if (userShopScore <= minShopScore) {
+		return maxPrice;
+	} else if (userShopScore >= maxShopScore) {
+		return minPrice;
+	} else {
+		const priceDiff = maxPrice - minPrice;
+		const shopScoreDiff = maxShopScore - minShopScore;
+		const m = priceDiff / shopScoreDiff; // diff_y/diff_x
+
+		const shopScoreRemainder = userShopScore - minShopScore;
+
+		// y = -mx + c
+		return Math.round(-m * shopScoreRemainder + maxPrice);
+	}
+}
