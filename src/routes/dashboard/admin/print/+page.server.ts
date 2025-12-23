@@ -31,7 +31,6 @@ export async function load({ locals }) {
 		.from(user)
 		.where(and(ne(user.trust, 'red'), ne(user.hackatimeTrust, 'red'))); // hide banned users
 
-	// Leaderboard: total Legion actions per user
 	const legionAgg = db
 		.$with('legionAgg')
 		.as(

@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db/index.js';
-import { project, user, devlog, t2Review, legionReview } from '$lib/server/db/schema.js';
+import { project, user, devlog, t2Review } from '$lib/server/db/schema.js';
 import { error } from '@sveltejs/kit';
 import { eq, and, sql, ne, inArray, desc, gt } from 'drizzle-orm';
 import type { Actions } from './$types';
@@ -30,7 +30,6 @@ export async function load({ locals }) {
 		.from(user)
 		.where(and(ne(user.trust, 'red'), ne(user.hackatimeTrust, 'red'))); // hide banned users
 
-	// Leaderboard: total reviews per user (T2 + Legion)
 	const t2Agg = db
 		.$with('t2Agg')
 		.as(
@@ -40,23 +39,13 @@ export async function load({ locals }) {
 				.groupBy(t2Review.userId)
 		);
 
-	const legionAgg = db
-		.$with('legionAgg')
-		.as(
-			db
-				.select({ userId: legionReview.userId, legionCnt: sql<number>`COUNT(*)`.as('legionCnt') })
-				.from(legionReview)
-				.groupBy(legionReview.userId)
-		);
-
-	const totalExpr = sql<number>`COALESCE(${t2Agg.t2Cnt}, 0) + COALESCE(${legionAgg.legionCnt}, 0)`;
+	const totalExpr = sql<number>`COALESCE(${t2Agg.t2Cnt}, 0)`;
 
 	const leaderboard = await db
-		.with(t2Agg, legionAgg)
+		.with(t2Agg)
 		.select({ id: user.id, name: user.name, review_count: totalExpr })
 		.from(user)
 		.leftJoin(t2Agg, eq(t2Agg.userId, user.id))
-		.leftJoin(legionAgg, eq(legionAgg.userId, user.id))
 		.where(and(ne(user.trust, 'red'), ne(user.hackatimeTrust, 'red'), gt(totalExpr, 0)))
 		.orderBy(desc(totalExpr))
 		.limit(10);
