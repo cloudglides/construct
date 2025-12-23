@@ -2,18 +2,15 @@
 	import Head from '$lib/components/Head.svelte';
 	import { enhance } from '$app/forms';
 
-	let formData = $state({
-		minRequiredShopScore: '0',
-		minShopScore: '0',
-		maxPrice: '0'
-	});
+	let { data } = $props();
 
+	let formData = $state(data.marketItem);
 	let formPending = $state(false);
 </script>
 
-<Head title="Add market item" />
+<Head title="Edit market item" />
 
-<h1 class="mt-5 mb-3 font-hero text-3xl">Add market item</h1>
+<h1 class="mt-5 mb-3 font-hero text-3xl">Edit market item</h1>
 
 <form
 	method="POST"
@@ -28,7 +25,14 @@
 >
 	<label class="flex flex-col gap-1">
 		Name
-		<input type="text" name="name" placeholder="Orpheus" required class="themed-input w-full" />
+		<input
+			type="text"
+			name="name"
+			placeholder="Orpheus"
+			required
+			bind:value={formData.name}
+			class="themed-input w-full"
+		/>
 	</label>
 
 	<label class="flex flex-col gap-1">
@@ -37,6 +41,7 @@
 			name="description"
 			placeholder="Get a visit from the holy Orpheus herself"
 			required
+			bind:value={formData.description}
 			class="themed-input w-full"
 		></textarea>
 	</label>
@@ -48,6 +53,7 @@
 			name="image"
 			placeholder="https://rawr.hackclub.com/DefinetlyNotAI_dino.png"
 			required
+			bind:value={formData.image}
 			class="themed-input w-full"
 		/>
 	</label>
@@ -88,7 +94,7 @@
 							name="maxShopScore"
 							required
 							min={formData.minShopScore}
-							value="0"
+							bind:value={formData.maxShopScore}
 							class="themed-input-on-box w-full text-center"
 						/>
 					</label>
@@ -118,7 +124,7 @@
 							min="0"
 							required
 							max={formData.maxPrice}
-							value="0"
+							bind:value={formData.minPrice}
 							class="themed-input-on-box w-full text-center"
 						/>
 					</label>
@@ -133,7 +139,7 @@
 	</label>
 
 	<div class="flex gap-2">
-		<button type="submit" class="button primary md" disabled={formPending}>Create</button>
+		<button type="submit" class="button primary md" disabled={formPending}>Save</button>
 		<a href="." class="button dark-red md">Cancel</a>
 	</div>
 </form>

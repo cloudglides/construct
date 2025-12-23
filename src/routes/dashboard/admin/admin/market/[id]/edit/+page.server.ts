@@ -2,19 +2,44 @@ import { db } from '$lib/server/db/index.js';
 import { marketItem } from '$lib/server/db/schema.js';
 import { error, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
+import { eq, and } from 'drizzle-orm';
 
-export async function load({ locals }) {
+export async function load({ locals, params }) {
 	if (!locals.user?.hasAdmin) {
 		throw error(403, { message: 'oi get out' });
 	}
 
-	return {};
+	const id: number = parseInt(params.id);
+
+	const [item] = await db
+		.select()
+		.from(marketItem)
+		.where(and(eq(marketItem.deleted, false), eq(marketItem.id, id)));
+
+	if (!item) {
+		return error(404, { message: 'item not found' });
+	}
+
+	return {
+		marketItem: item
+	};
 }
 
 export const actions: Actions = {
-	default: async ({ request, locals }) => {
+	default: async ({ request, locals, params }) => {
 		if (!locals.user?.hasAdmin) {
 			throw error(403, { message: 'oi get out' });
+		}
+
+		const id: number = parseInt(params.id);
+
+		const [item] = await db
+			.select()
+			.from(marketItem)
+			.where(and(eq(marketItem.deleted, false), eq(marketItem.id, id)));
+
+		if (!item) {
+			return error(404, { message: 'item not found' });
 		}
 
 		const formData = await request.formData();
@@ -28,7 +53,7 @@ export const actions: Actions = {
 		const maxPrice = parseInt(formData.get('maxPrice')?.toString() || '0');
 		const isPublic = formData.get('isPublic') === 'on';
 
-		// Don't need to implement proper validation, page is admins only
+		// Don't really need to implement proper validation, page is admins only
 
 		if (!name || !description || !image) {
 			throw error(400, { message: 'Missing required fields' });
@@ -44,18 +69,20 @@ export const actions: Actions = {
 			});
 		}
 
-		await db.insert(marketItem).values({
-			createdBy: locals.user.id,
-			name,
-			description,
-			image,
-			minRequiredShopScore,
-			minShopScore,
-			maxShopScore,
-			minPrice,
-			maxPrice,
-			isPublic
-		});
+		await db
+			.update(marketItem)
+			.set({
+				name,
+				description,
+				image,
+				minRequiredShopScore,
+				minShopScore,
+				maxShopScore,
+				minPrice,
+				maxPrice,
+				isPublic
+			})
+			.where(eq(marketItem.id, id));
 
 		return redirect(302, '/dashboard/admin/admin/market');
 	}
