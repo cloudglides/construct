@@ -17,7 +17,7 @@
 
 <form
 	method="POST"
-	class="flex flex-col gap-3"
+	class="mb-5 flex flex-col gap-3"
 	use:enhance={() => {
 		formPending = true;
 		return async ({ update }) => {

@@ -50,14 +50,14 @@
 {#if data.marketItems.length === 0}
 	<MarketTimer />
 {:else}
-	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+	<div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 mb-5">
 		{#each data.marketItems as item (item.id)}
 			<div class="themed-box p-4 flex flex-col gap-3">
 				<div class="aspect-square rounded-lg overflow-hidden mb-3 bg-primary-800/10">
 					<img src={item.image} alt={item.name} class="w-full h-full object-contain object-center" />
 				</div>
 				<div>
-					<h3 class="text-lg font-hc font-bold mb-1">{item.name}</h3>
+					<h3 class="text-lg font-bold mb-1">{item.name}</h3>
 					<p class="text-sm text-primary-300 leading-snug">{item.description}</p>
 				{#if getPriceInfo(item).hasDiscount}
 					<div class="flex items-center gap-3 mt-3">

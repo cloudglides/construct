@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Head from '$lib/components/Head.svelte';
 	import { enhance } from '$app/forms';
+	import MarketItem from '../../MarketItem.svelte';
 
 	let { data } = $props();
 
@@ -12,9 +13,13 @@
 
 <h1 class="mt-5 mb-3 font-hero text-3xl">Edit market item</h1>
 
+<div class="mb-3 grid grid-cols-3">
+	<MarketItem item={formData} showButtons={false} />
+</div>
+
 <form
 	method="POST"
-	class="flex flex-col gap-3"
+	class="mb-5 flex flex-col gap-3"
 	use:enhance={() => {
 		formPending = true;
 		return async ({ update }) => {

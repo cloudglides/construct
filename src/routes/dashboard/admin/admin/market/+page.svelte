@@ -32,12 +32,12 @@
 <h1 class="mt-5 mb-3 font-hero text-3xl font-medium">Market</h1>
 
 <div class="flex flex-row">
-	<a href="market/create" class="button primary md mb-6">Add item</a>
+	<a href="market/create" class="button primary md mb-5">Add item</a>
 </div>
 
-<div class="flex flex-col gap-8">
-	<section>
-		<h2 class="mb-3 text-xl font-bold">Public</h2>
+<div class="mb-5 flex flex-col gap-5">
+	<div>
+		<h2 class="mb-3 text-2xl font-bold">Public</h2>
 		{#if publicItems.length === 0}
 			<p class="text-sm text-primary-300">No public items yet.</p>
 		{:else}
@@ -47,10 +47,10 @@
 				{/each}
 			</div>
 		{/if}
-	</section>
+	</div>
 
-	<section>
-		<h2 class="mb-3 text-xl font-bold">Private</h2>
+	<div>
+		<h2 class="mb-3 text-2xl font-bold">Private</h2>
 		{#if privateItems.length === 0}
 			<p class="text-sm">Nothing to see here.</p>
 		{:else}
@@ -60,5 +60,5 @@
 				{/each}
 			</div>
 		{/if}
-	</section>
+	</div>
 </div>
