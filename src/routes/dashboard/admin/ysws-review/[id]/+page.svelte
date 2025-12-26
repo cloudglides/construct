@@ -12,6 +12,7 @@
 	let { data, form } = $props();
 
 	let formPending = $state(false);
+	let overridePending = $state(false);
 </script>
 
 <Head title={'YSWS Review: ' + data.project.project.name} />
@@ -114,6 +115,7 @@
 			<div class="themed-box flex flex-col gap-3 p-3">
 				<form
 					method="POST"
+					action="?/review"
 					class="flex flex-col gap-3"
 					use:enhance={() => {
 						formPending = true;
@@ -151,7 +153,39 @@
 			<h2 class="mt-2 text-2xl font-bold">Journal logs</h2>
 			<div class="mb-5 flex flex-col gap-5">
 				{#each data.devlogs as devlog}
-					<Devlog {devlog} projectId={devlog.projectId} showModifyButtons={false} />
+					<div class="flex flex-col gap-2">
+						<Devlog {devlog} projectId={devlog.projectId} showModifyButtons={false} />
+						<div class="themed-box flex flex-col gap-3 p-3">
+							<form
+								method="POST"
+								class="flex flex-row gap-3"
+								action="?/override"
+								use:enhance={() => {
+									overridePending = true;
+									return async ({ update }) => {
+										await update({ reset: false });
+										overridePending = false;
+									};
+								}}
+							>
+								<input
+									name="minutes"
+									type="number"
+									class="themed-input-on-box grow"
+									placeholder="50"
+									value={devlog.timeSpent}
+									min="0"
+									required
+								/>
+
+								<input type="hidden" name="devlogId" value={devlog.id} />
+
+								<button type="submit" class="button md primary items-center" disabled={overridePending}>
+									Override
+								</button>
+							</form>
+						</div>
+					</div>
 				{/each}
 			</div>
 		</div>

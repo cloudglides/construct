@@ -91,7 +91,7 @@ export async function load({ locals, params }) {
 }
 
 export const actions = {
-	default: async ({ locals, request, params }) => {
+	review: async ({ locals, request, params }) => {
 		if (!locals.user) {
 			throw error(500);
 		}
@@ -191,7 +191,7 @@ export const actions = {
 			}
 			const { first_name, last_name, primary_email, birthday, addresses } = userData;
 
-			const address = addresses.find((address: { primary: boolean; }) => address.primary);
+			const address = addresses.find((address: { primary: boolean }) => address.primary);
 
 			const repoUrl =
 				queriedProject.project.editorFileType === 'upload'
@@ -211,12 +211,12 @@ export const actions = {
 
 				'First Name': first_name ?? '',
 				'Last Name': last_name ?? '',
-				'Email': primary_email ?? '',
-				'Birthday': birthday ?? '',
+				Email: primary_email ?? '',
+				Birthday: birthday ?? '',
 				'Address (Line 1)': address?.line_1 ?? '',
-				'City': address?.city ?? '',
+				City: address?.city ?? '',
 				'State / Province': address?.state ?? '',
-				'Country': address?.country ?? '',
+				Country: address?.country ?? '',
 				'ZIP / Postal Code': address?.postal_code ?? '',
 
 				'Hours estimate': queriedProject.timeSpent / 60,
@@ -263,5 +263,55 @@ export const actions = {
 		}
 
 		return redirect(302, '/dashboard/admin/review');
+	},
+
+	override: async ({ locals, request, params }) => {
+		if (!locals.user) {
+			throw error(500);
+		}
+		if (!locals.user.hasT2Review) {
+			throw error(403, { message: 'oi get out' });
+		}
+
+		const id: number = parseInt(params.id);
+
+		const data = await request.formData();
+		const devlogId = data.get('devlogId');
+		const timeSpent = data.get('minutes');
+
+		if (!devlogId || isNaN(parseInt(devlogId.toString()))) {
+			return error(400, { message: 'invalid devlog id' });
+		}
+
+		const parsedDevlogId = parseInt(devlogId.toString());
+
+		if (!timeSpent || isNaN(parseInt(timeSpent.toString())) || parseInt(timeSpent.toString()) < 0) {
+			return error(400, { message: 'invalid time spent' });
+		}
+
+		const parsedTimeSpent = parseInt(timeSpent.toString());
+
+		const [queriedDevlog] = await db
+			.select({ id: devlog.id })
+			.from(devlog)
+			.where(
+				and(eq(devlog.deleted, false), eq(devlog.projectId, id), eq(devlog.id, parsedDevlogId))
+			)
+			.limit(1);
+
+		if (!queriedDevlog) {
+			return error(404, { message: 'devlog not found' });
+		}
+
+		await db
+			.update(devlog)
+			.set({
+				timeSpent: parsedTimeSpent
+			})
+			.where(
+				and(eq(devlog.deleted, false), eq(devlog.projectId, id), eq(devlog.id, parsedDevlogId))
+			);
+
+		return { success: true };
 	}
 } satisfies Actions;
