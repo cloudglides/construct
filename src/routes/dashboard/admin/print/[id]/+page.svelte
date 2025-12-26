@@ -171,8 +171,10 @@
 								printFormPending = false;
 							};
 						}}
-						onsubmit={() => {
-							return confirm('really submit?');
+						onsubmit={(e) => {
+							if (!confirm('really submit?')) {
+								e.preventDefault();
+							}
 						}}
 					>
 						<label class="flex flex-col gap-1">
@@ -223,8 +225,10 @@
 								actionsFormPending = false;
 							};
 						}}
-						onsubmit={() => {
-							return confirm('really submit?');
+						onsubmit={(e) => {
+							if (!confirm('really submit?')) {
+								e.preventDefault();
+							}
 						}}
 					>
 						<label class="flex flex-col gap-1">

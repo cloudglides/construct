@@ -29,8 +29,10 @@
 					logoutEveryonePending = false;
 				};
 			}}
-			onsubmit={() => {
-				return confirm('really really log everyone out?');
+			onsubmit={(e) => {
+				if (!confirm('really really log everyone out?')) {
+					e.preventDefault();
+				}
 			}}
 		>
 			<button type="submit" class="button md red w-full" disabled={logoutEveryonePending}>
