@@ -7,33 +7,19 @@
 	import ProjectLinks from '$lib/components/ProjectLinks.svelte';
 	import Spinny3DPreview from '$lib/components/Spinny3DPreview.svelte';
 	import { Download } from '@lucide/svelte';
-	import ReviewHistory from '../../ReviewHistory.svelte';
-	import { calculatePayouts, minutesToClay } from '$lib/currency';
-	import { BASE_SHOP_SCORE_PER_HOUR } from '$lib/defs';
 
 	let { data, form } = $props();
 
 	let formPending = $state(false);
-	let overridePending = $state(false);
-
-	let shopScoreMultiplier = $state(BASE_SHOP_SCORE_PER_HOUR);
-	let payouts = $derived.by(() =>
-		calculatePayouts(
-			data.project.timeSpent,
-			data.filamentUsed,
-			shopScoreMultiplier,
-			data.user.hasBasePrinter,
-			data.project.project.createdAt
-		)
-	);
 </script>
 
-<Head title={'YSWS Review: ' + data.project.project.name} />
+<!-- TODO: change the 0 after adding orders -->
+<Head title={'Order: ' + 0} />
 
 <div
 	class="-mt-5 -mr-5 flex h-full flex-row [&>*]:-mb-5 [&>*]:overflow-x-clip [&>*]:pt-5 [&>*]:pr-5"
 >
-	<div class="grow overflow-scroll">
+	<!-- <div class="grow overflow-scroll">
 		<div class="flex grow flex-col gap-3">
 			<h1 class="mt-5 font-hero text-2xl font-medium">{data.project.project.name}</h1>
 
@@ -55,7 +41,6 @@
 							.project.timeSpent % 60}min
 					</p>
 					<p>Status: {projectStatuses[data.project.project.status]}</p>
-					<p>Filament spent printing: {data.filamentUsed}g</p>
 					<p>Submitted to Airtable: {data.project.project.submittedToAirtable ?? 'null (false)'}</p>
 					<div class="mt-1">
 						<ProjectLinks
@@ -129,7 +114,6 @@
 			<div class="themed-box flex flex-col gap-3 p-3">
 				<form
 					method="POST"
-					action="?/review"
 					class="flex flex-col gap-3"
 					use:enhance={() => {
 						formPending = true;
@@ -154,27 +138,6 @@
 						<textarea name="feedback" class="themed-input-on-box"></textarea>
 					</label>
 
-					<label class="flex flex-col gap-1">
-						<span class="font-medium">Market score per hour</span>
-						<input
-							type="number"
-							name="shopScoreMultiplier"
-							bind:value={shopScoreMultiplier}
-							class="themed-input-on-box"
-							placeholder="Market score per hour"
-							step="0.1"
-							min="0"
-							required
-						/>
-					</label>
-
-					<p>
-						Payouts: {Math.round((payouts.clay ?? 0) * 10) / 10} clay, {Math.round(
-							(payouts.bricks ?? 0) * 10
-						) / 10} bricks,
-						{Math.round(payouts.shopScore * 10) / 10} market score
-					</p>
-
 					{#if form?.message}
 						<p>{form?.message}</p>
 					{/if}
@@ -188,48 +151,9 @@
 			<h2 class="mt-2 text-2xl font-bold">Journal logs</h2>
 			<div class="mb-5 flex flex-col gap-5">
 				{#each data.devlogs as devlog}
-					<div class="flex flex-col gap-2">
-						<Devlog {devlog} projectId={devlog.projectId} showModifyButtons={false} />
-						<div class="themed-box flex flex-col gap-3 p-3">
-							<form
-								method="POST"
-								class="flex flex-row gap-3"
-								action="?/override"
-								use:enhance={() => {
-									overridePending = true;
-									return async ({ update }) => {
-										await update({ reset: false });
-										overridePending = false;
-									};
-								}}
-							>
-								<input
-									name="minutes"
-									type="number"
-									class="themed-input-on-box grow"
-									placeholder="50"
-									value={devlog.timeSpent}
-									min="0"
-									required
-								/>
-
-								<input type="hidden" name="devlogId" value={devlog.id} />
-
-								<button
-									type="submit"
-									class="button md primary items-center"
-									disabled={overridePending}
-								>
-									Override
-								</button>
-							</form>
-						</div>
-					</div>
+					<Devlog {devlog} projectId={devlog.projectId} showModifyButtons={false} />
 				{/each}
 			</div>
 		</div>
-	</div>
-	<div class="w-60 min-w-60 overflow-scroll lg:w-70 lg:min-w-70">
-		<ReviewHistory reviews={data.reviews} />
-	</div>
+	</div> -->
 </div>

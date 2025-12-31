@@ -182,7 +182,7 @@ export const t2Review = pgTable('t2_review', {
 
 	feedback: text(),
 	notes: text(),
-	currencyMultiplier: real().notNull().default(1.0),
+	shopScoreMultiplier: real().notNull().default(25.0),
 
 	timestamp: timestamp().notNull().defaultNow()
 });
@@ -230,7 +230,6 @@ export const marketItem = pgTable('market_item', {
 
 export const marketOrderStatus = pgEnum('market_order_status', [
 	'awaiting_approval',
-	'approved',
 	'fulfilled',
 	'denied',
 	'refunded'
