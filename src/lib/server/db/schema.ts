@@ -182,7 +182,7 @@ export const t2Review = pgTable('t2_review', {
 
 	feedback: text(),
 	notes: text(),
-	currencyMultiplier: real().notNull().default(1.0),
+	shopScoreMultiplier: real().notNull().default(25.0),
 
 	timestamp: timestamp().notNull().defaultNow()
 });

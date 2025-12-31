@@ -1,5 +1,4 @@
 import {
-	BASE_SHOP_SCORE_PER_HOUR,
 	BETA_DATE_CUTOFF,
 	BETA_MULTIPLIER,
 	BRICKS_PER_HOUR,
@@ -22,7 +21,7 @@ export function minutesToBricks(minutes: number) {
 export function calculateShopScore(minutes: number, multiplier: number) {
 	const hours = minutes / 60;
 
-	return hours * multiplier * BASE_SHOP_SCORE_PER_HOUR;
+	return hours * multiplier;
 }
 
 export function calculateMinutes(timeSpent: number, printGrams: number) {
@@ -51,7 +50,7 @@ export function calculatePayouts(
 	const time = calculateMinutes(timeSpent, printGrams);
 	const currency = calculateCurrencyPayout(time, hasBasePrinter, dateCreated);
 	const shopScore =
-		calculateShopScore(time, shopScoreMultiplier) *
+		calculateShopScore(timeSpent, shopScoreMultiplier) *
 		(dateCreated.getTime() < BETA_DATE_CUTOFF.getTime() ? BETA_MULTIPLIER : 1);
 
 	return { ...currency, shopScore };
