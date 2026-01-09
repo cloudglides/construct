@@ -37,6 +37,7 @@ export async function load({ locals }) {
 			db
 				.select({ userId: legionReview.userId, legionCnt: sql<number>`COUNT(*)`.as('legionCnt') })
 				.from(legionReview)
+				.where(eq(legionReview.action, 'print'))
 				.groupBy(legionReview.userId)
 		);
 
@@ -48,8 +49,7 @@ export async function load({ locals }) {
 		.from(user)
 		.leftJoin(legionAgg, eq(legionAgg.userId, user.id))
 		.where(and(ne(user.trust, 'red'), ne(user.hackatimeTrust, 'red'), gt(totalExpr, 0)))
-		.orderBy(desc(totalExpr))
-		.limit(10);
+		.orderBy(desc(totalExpr));
 
 	const currentlyPrinting = await getCurrentlyPrinting(locals.user);
 

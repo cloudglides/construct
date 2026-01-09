@@ -47,8 +47,7 @@ export async function load({ locals }) {
 		.from(user)
 		.leftJoin(t2Agg, eq(t2Agg.userId, user.id))
 		.where(and(ne(user.trust, 'red'), ne(user.hackatimeTrust, 'red'), gt(totalExpr, 0)))
-		.orderBy(desc(totalExpr))
-		.limit(10);
+		.orderBy(desc(totalExpr));
 
 	return {
 		allProjects,
