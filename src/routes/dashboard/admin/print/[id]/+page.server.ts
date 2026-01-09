@@ -5,6 +5,7 @@ import { eq, and, asc, sql } from 'drizzle-orm';
 import type { Actions } from './$types';
 import { sendSlackDM } from '$lib/server/slack.js';
 import { getReviewHistory } from '../../getReviewHistory.server';
+import { getCurrentlyPrinting } from '../utils.server';
 
 export async function load({ locals, params }) {
 	if (!locals.user) {
@@ -79,10 +80,13 @@ export async function load({ locals, params }) {
 		.where(and(eq(devlog.projectId, queriedProject.project.id), eq(devlog.deleted, false)))
 		.orderBy(asc(devlog.createdAt));
 
+	const currentlyPrinting = await getCurrentlyPrinting(locals.user);
+
 	return {
 		project: queriedProject,
 		devlogs,
-		reviews: await getReviewHistory(id)
+		reviews: await getReviewHistory(id),
+		currentlyPrinting
 	};
 }
 
@@ -95,7 +99,15 @@ export const actions = {
 			throw error(403, { message: 'oi get out' });
 		}
 
+		const currentlyPrinting = await getCurrentlyPrinting(locals.user);
+
 		const id: number = parseInt(params.id);
+
+		if (currentlyPrinting && currentlyPrinting.id !== id) {
+			return error(400, {
+				message: 'you are already printing something else right now'
+			});
+		}
 
 		const [queriedProject] = await db
 			.select({
@@ -124,8 +136,7 @@ export const actions = {
 			.update(project)
 			.set({
 				status: 'printing',
-				printedBy: locals.user.id,
-				claimedAt: new Date()
+				printedBy: locals.user.id
 			})
 			.where(eq(project.id, id));
 
@@ -170,8 +181,7 @@ export const actions = {
 			.update(project)
 			.set({
 				status: 't1_approved',
-				printedBy: null,
-				claimedAt: null
+				printedBy: null
 			})
 			.where(eq(project.id, id));
 
@@ -186,13 +196,20 @@ export const actions = {
 			throw error(403, { message: 'oi get out' });
 		}
 
+		const currentlyPrinting = await getCurrentlyPrinting(locals.user);
+
 		const id: number = parseInt(params.id);
+
+		if (!currentlyPrinting || currentlyPrinting.id !== id) {
+			return error(400, {
+				message: "you can only print a project if you've marked it as you're printing it"
+			});
+		}
 
 		const [queriedProject] = await db
 			.select({
 				id: project.id,
-				status: project.status,
-				printedBy: project.printedBy
+				status: project.status
 			})
 			.from(project)
 			.where(and(eq(project.id, id), eq(project.deleted, false)))
@@ -204,12 +221,6 @@ export const actions = {
 
 		if (queriedProject.status !== 'printing') {
 			return error(403, { message: 'project is not marked as currently printing' });
-		}
-
-		if (queriedProject.printedBy !== locals.user.id) {
-			return error(400, {
-				message: "you can only print a project if you've marked it as you're printing it"
-			});
 		}
 
 		const data = await request.formData();
@@ -241,8 +252,7 @@ export const actions = {
 		await db
 			.update(project)
 			.set({
-				status: 'printed',
-				claimedAt: null
+				status: 'printed'
 			})
 			.where(eq(project.id, id));
 
