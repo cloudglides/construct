@@ -101,6 +101,7 @@ export const actions = {
 
 		await db.insert(marketItemOrder).values({
 			userId: locals.user.id,
+			marketItemId: id,
 			addressId,
 			bricksPaid: itemWithPrice.computedPrice,
 			userNotes: notes
