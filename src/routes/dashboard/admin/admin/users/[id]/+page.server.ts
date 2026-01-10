@@ -214,6 +214,50 @@ export const actions = {
 		};
 	},
 
+	changeTrust: async ({ locals, request, params }) => {
+		if (!locals.user) {
+			throw error(500);
+		}
+		if (!locals.user.hasAdmin) {
+			throw error(403, { message: 'oi get out' });
+		}
+
+		const id: number = parseInt(params.id);
+
+		const data = await request.formData();
+		const trust = data.get('trust');
+
+		if (!trust || !['green', 'blue', 'yellow', 'red'].includes(trust.toString())) {
+			return fail(400, {
+				changeTrust: {
+					invalidTrust: true
+				}
+			});
+		}
+
+		// Log out user if trust is set to red
+		if (trust === 'red') {
+			await db.delete(session).where(eq(session.userId, id));
+		}
+
+		await db
+			.update(user)
+			.set({
+				trust: trust.toString() as 'green' | 'blue' | 'yellow' | 'red'
+			})
+			.where(eq(user.id, id));
+
+		const [queriedUser] = await db.select().from(user).where(eq(user.id, id));
+
+		if (!queriedUser) {
+			throw error(404, { message: 'user not found' });
+		}
+
+		return {
+			queriedUser
+		};
+	},
+
 	impersonate: async (event) => {
 		const { locals, params } = event;
 
