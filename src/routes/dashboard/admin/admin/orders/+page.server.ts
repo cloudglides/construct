@@ -1,26 +1,26 @@
 import { db } from '$lib/server/db/index.js';
-import { project, user, devlog } from '$lib/server/db/schema.js';
+import { marketItemOrder, marketItem, user } from '$lib/server/db/schema.js';
 import { error } from '@sveltejs/kit';
-import { eq, and, sql, ne, inArray } from 'drizzle-orm';
+import { eq, and, ne, inArray, desc } from 'drizzle-orm';
 import type { Actions } from './$types';
 
 export async function load({ locals }) {
 	if (!locals.user) {
 		throw error(500);
 	}
-	if (!locals.user.hasT2Review) {
+	if (!locals.user.hasAdmin) {
 		throw error(403, { message: 'oi get out' });
 	}
 
-	const projects = await getProjects(['printed'], [], []);
+	const orders = await getOrders(['awaiting_approval'], [], []);
 
-	const allProjects = await db
+	const allMarketItems = await db
 		.select({
-			id: project.id,
-			name: project.name
+			id: marketItem.id,
+			name: marketItem.name
 		})
-		.from(project)
-		.where(and(eq(project.deleted, false)));
+		.from(marketItem)
+		.where(eq(marketItem.deleted, false));
 
 	const users = await db
 		.select({
@@ -31,8 +31,8 @@ export async function load({ locals }) {
 		.where(and(ne(user.trust, 'red'), ne(user.hackatimeTrust, 'red'))); // hide banned users
 
 	return {
-		allProjects,
-		projects,
+		allMarketItems,
+		orders,
 		users
 	};
 }
@@ -42,79 +42,79 @@ export const actions = {
 		if (!locals.user) {
 			throw error(500);
 		}
-		if (!locals.user.hasT2Review) {
+		if (!locals.user.hasAdmin) {
 			throw error(403, { message: 'oi get out' });
 		}
 
 		const data = await request.formData();
-		const statusFilter = data.getAll('status') as (typeof project.status._.data)[];
+		const statusFilter = data.getAll('status') as (typeof marketItemOrder.status._.data)[];
 
-		const projectFilter = data.getAll('project').map((projectId) => {
-			const parsedInt = parseInt(projectId.toString());
-			if (!parsedInt) throw error(400, { message: 'malformed project filter' });
-			return parseInt(projectId.toString());
+		const marketItemFilter = data.getAll('marketItem').map((itemId) => {
+			const parsedInt = parseInt(itemId.toString());
+			if (!parsedInt) throw error(400, { message: 'malformed market item filter' });
+			return parsedInt;
 		});
 
 		const userFilter = data.getAll('user').map((userId) => {
 			const parsedInt = parseInt(userId.toString());
 			if (!parsedInt) throw error(400, { message: 'malformed user filter' });
-			return parseInt(userId.toString());
+			return parsedInt;
 		});
 
-		const projects = await getProjects(statusFilter, projectFilter, userFilter);
+		const orders = await getOrders(statusFilter, marketItemFilter, userFilter);
 
 		return {
-			projects,
+			orders,
 			fields: {
 				status: statusFilter,
-				project: projectFilter,
+				marketItem: marketItemFilter,
 				user: userFilter
 			}
 		};
 	}
 } satisfies Actions;
 
-async function getProjects(
-	statusFilter: (typeof project.status._.data)[],
-	projectFilter: number[],
+async function getOrders(
+	statusFilter: (typeof marketItemOrder.status._.data)[],
+	marketItemFilter: number[],
 	userFilter: number[]
 ) {
 	return await db
 		.select({
-			project: {
-				id: project.id,
-				name: project.name,
-				description: project.description,
-				url: project.url,
-				createdAt: project.createdAt,
-				status: project.status
+			order: {
+				id: marketItemOrder.id,
+				userId: marketItemOrder.userId,
+				marketItemId: marketItemOrder.marketItemId,
+				addressId: marketItemOrder.addressId,
+				bricksPaid: marketItemOrder.bricksPaid,
+				status: marketItemOrder.status,
+				userNotes: marketItemOrder.userNotes,
+				notes: marketItemOrder.notes,
+				createdAt: marketItemOrder.createdAt
+			},
+			marketItem: {
+				id: marketItem.id,
+				name: marketItem.name,
+				image: marketItem.image
 			},
 			user: {
 				id: user.id,
-				name: user.name
-			},
-			timeSpent: sql<number>`COALESCE(SUM(${devlog.timeSpent}), 0)`,
-			devlogCount: sql<number>`COALESCE(COUNT(${devlog.id}), 0)`
+				name: user.name,
+				idvToken: user.idvToken
+			}
 		})
-		.from(project)
-		.leftJoin(devlog, and(eq(project.id, devlog.projectId), eq(devlog.deleted, false)))
-		.leftJoin(user, eq(user.id, project.userId))
+		.from(marketItemOrder)
+		.leftJoin(marketItem, eq(marketItem.id, marketItemOrder.marketItemId))
+		.leftJoin(user, eq(user.id, marketItemOrder.userId))
 		.where(
 			and(
-				eq(project.deleted, false),
-				statusFilter.length > 0 ? inArray(project.status, statusFilter) : undefined,
-				projectFilter.length > 0 ? inArray(project.id, projectFilter) : undefined,
-				userFilter.length > 0 ? inArray(project.userId, userFilter) : undefined
+				eq(marketItemOrder.deleted, false),
+				statusFilter.length > 0 ? inArray(marketItemOrder.status, statusFilter) : undefined,
+				marketItemFilter.length > 0
+					? inArray(marketItemOrder.marketItemId, marketItemFilter)
+					: undefined,
+				userFilter.length > 0 ? inArray(marketItemOrder.userId, userFilter) : undefined
 			)
 		)
-		.groupBy(
-			project.id,
-			project.name,
-			project.description,
-			project.url,
-			project.createdAt,
-			project.status,
-			user.id,
-			user.name
-		);
+		.orderBy(desc(marketItemOrder.createdAt));
 }
