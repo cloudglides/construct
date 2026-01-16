@@ -12,6 +12,7 @@ import { getReviewHistory } from '../../getReviewHistory.server';
 import { calculatePayouts } from '$lib/currency';
 import { isValidUrl } from '$lib/utils';
 import { sanitizeUrl } from '@braintree/sanitize-url';
+import { T2_PAYOUT_BRICKS } from '$lib/defs';
 
 export async function load({ locals, params }) {
 	if (!locals.user) {
@@ -113,6 +114,7 @@ export const actions = {
 					name: project.name,
 					description: project.description,
 					createdAt: project.createdAt,
+					status: project.status,
 
 					url: project.url,
 					editorFileType: project.editorFileType,
@@ -146,6 +148,7 @@ export const actions = {
 				project.name,
 				project.description,
 				project.createdAt,
+				project.status,
 				project.url,
 				project.editorFileType,
 				project.editorUrl,
@@ -307,6 +310,16 @@ export const actions = {
 				submittedToAirtable: true
 			})
 			.where(eq(project.id, id));
+
+		if (queriedProject.project.status === 'printed') {
+			// Bricks payout for reviewer
+			await db
+				.update(user)
+				.set({
+					brick: locals.user.brick + T2_PAYOUT_BRICKS
+				})
+				.where(eq(user.id, locals.user.id));
+		}
 
 		if (queriedProject.user) {
 			const payouts = calculatePayouts(
