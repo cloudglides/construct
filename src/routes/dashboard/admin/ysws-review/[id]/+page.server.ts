@@ -13,6 +13,7 @@ import { calculatePayouts } from '$lib/currency';
 import { isValidUrl } from '$lib/utils';
 import { sanitizeUrl } from '@braintree/sanitize-url';
 import { T2_PAYOUT_BRICKS } from '$lib/defs';
+import { PXL_API_KEY } from '$env/static/private';
 
 export async function load({ locals, params }) {
 	if (!locals.user) {
@@ -338,6 +339,16 @@ export const actions = {
 					shopScore: sql`${user.shopScore} + ${payouts.shopScore}`
 				})
 				.where(eq(user.id, queriedProject.user.id));
+
+			if (PXL_API_KEY)
+				await fetch('https://pxl.hackclub.com/api/pixels/give', {
+					method: 'POST',
+					headers: {
+						Authorization: `Bearer ${PXL_API_KEY}`,
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ slack_id: queriedProject.user.slackId, number_to_add: 200 })
+				});
 
 			const feedbackText = feedback ? `\n\nHere's what they said:\n${feedback}` : '';
 
