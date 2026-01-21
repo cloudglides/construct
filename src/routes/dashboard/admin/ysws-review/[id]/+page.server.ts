@@ -300,7 +300,10 @@ export const actions = {
 						Authorization: `Bearer ${env.PXL_API_KEY}`,
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({ email: primary_email, number_to_add: 200 })
+					body: JSON.stringify({
+						email: primary_email,
+						number_to_add: 200 + queriedProject.timeSpent
+					})
 				});
 		}
 
