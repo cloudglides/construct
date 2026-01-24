@@ -1,5 +1,5 @@
 import { db } from '$lib/server/db/index.js';
-import { project, user, devlog, t2Review, legionReview } from '$lib/server/db/schema.js';
+import { project, user, devlog, t2Review, legionReview, ship } from '$lib/server/db/schema.js';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { eq, and, asc, sql, desc } from 'drizzle-orm';
 import type { Actions } from './$types';
@@ -335,22 +335,33 @@ export const actions = {
 		}
 
 		if (queriedProject.user) {
-			const payouts = calculatePayouts(
-				queriedProject.timeSpent,
-				await getLatestPrintFilament(id),
-				parsedShopScoreMultiplier,
-				queriedProject.user.hasBasePrinter,
-				queriedProject.project.createdAt
-			);
+			const [latestShip] = await db
+				.select({ clubId: ship.clubId })
+				.from(ship)
+				.where(eq(ship.projectId, id))
+				.orderBy(desc(ship.timestamp))
+				.limit(1);
 
-			await db
-				.update(user)
-				.set({
-					clay: sql`${user.clay} + ${payouts.clay ?? 0}`,
-					brick: sql`${user.brick} + ${payouts.bricks ?? 0}`,
-					shopScore: sql`${user.shopScore} + ${payouts.shopScore}`
-				})
-				.where(eq(user.id, queriedProject.user.id));
+			const isClubShip = latestShip?.clubId !== null && latestShip?.clubId !== undefined;
+
+			if (!isClubShip) {
+				const payouts = calculatePayouts(
+					queriedProject.timeSpent,
+					await getLatestPrintFilament(id),
+					parsedShopScoreMultiplier,
+					queriedProject.user.hasBasePrinter,
+					queriedProject.project.createdAt
+				);
+
+				await db
+					.update(user)
+					.set({
+						clay: sql`${user.clay} + ${payouts.clay ?? 0}`,
+						brick: sql`${user.brick} + ${payouts.bricks ?? 0}`,
+						shopScore: sql`${user.shopScore} + ${payouts.shopScore}`
+					})
+					.where(eq(user.id, queriedProject.user.id));
+			}
 
 			const feedbackText = feedback ? `\n\nHere's what they said:\n${feedback}` : '';
 
