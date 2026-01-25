@@ -166,8 +166,8 @@
 	</label>
 
 	{#if data.clubMembership}
-		<div class="mt-3">
-			<p class="mb-2 font-bold">Submit as</p>
+		<div class="mt-1">
+			<p class="mb-1 font-bold">Submit as</p>
 			<div class="themed-box flex flex-col gap-2 p-3">
 				<label class="flex cursor-pointer items-center gap-2">
 					<input
@@ -192,7 +192,7 @@
 					<span>Submit as {data.clubMembership.clubName}</span>
 				</label>
 				{#if submitAsClub}
-					<p class="text-sm text-gray-400">
+					<p class="text-sm opacity-80">
 						This project's hours will count toward your club's total.
 					</p>
 				{/if}
@@ -274,7 +274,7 @@
 				/>
 			</label>
 			{#if submitAsClub}
-				<p class="mt-2 text-gray-400">
+				<p class="mt-2 opacity-80">
 					Club submissions do not receive personal currency rewards.
 				</p>
 			{:else}

@@ -362,33 +362,34 @@ export const actions = {
 					})
 					.where(eq(user.id, queriedProject.user.id));
 			}
-		if (queriedProject.user && queriedProject.project.status === 'printed') {
-			const payouts = calculatePayouts(
-				queriedProject.timeSpent,
-				await getLatestPrintFilament(id),
-				parsedShopScoreMultiplier,
-				queriedProject.user.hasBasePrinter,
-				queriedProject.project.createdAt
-			);
+			if (queriedProject.user && queriedProject.project.status === 'printed') {
+				const payouts = calculatePayouts(
+					queriedProject.timeSpent,
+					await getLatestPrintFilament(id),
+					parsedShopScoreMultiplier,
+					queriedProject.user.hasBasePrinter,
+					queriedProject.project.createdAt
+				);
 
-			await db
-				.update(user)
-				.set({
-					clay: sql`${user.clay} + ${payouts.clay ?? 0}`,
-					brick: sql`${user.brick} + ${payouts.bricks ?? 0}`,
-					shopScore: sql`${user.shopScore} + ${payouts.shopScore}`
-				})
-				.where(eq(user.id, queriedProject.user.id));
+				await db
+					.update(user)
+					.set({
+						clay: sql`${user.clay} + ${payouts.clay ?? 0}`,
+						brick: sql`${user.brick} + ${payouts.bricks ?? 0}`,
+						shopScore: sql`${user.shopScore} + ${payouts.shopScore}`
+					})
+					.where(eq(user.id, queriedProject.user.id));
 
-			const feedbackText = feedback ? `\n\nHere's what they said:\n${feedback}` : '';
+				const feedbackText = feedback ? `\n\nHere's what they said:\n${feedback}` : '';
 
-			await sendSlackDM(
-				queriedProject.user.slackId,
-				`Your project <https://construct.hackclub.com/dashboard/projects/${queriedProject.project.id}|${queriedProject.project.name}> has been ${statusMessage}${feedbackText}`
-			);
+				await sendSlackDM(
+					queriedProject.user.slackId,
+					`Your project <https://construct.hackclub.com/dashboard/projects/${queriedProject.project.id}|${queriedProject.project.name}> has been ${statusMessage}${feedbackText}`
+				);
+			}
+
+			return redirect(302, '/dashboard/admin/ysws-review');
 		}
-
-		return redirect(302, '/dashboard/admin/ysws-review');
 	},
 
 	override: async ({ locals, request, params }) => {
