@@ -275,7 +275,7 @@ export const actions = {
 				.select({
 					maxRecords: 1,
 					view: 'Grid view',
-					filterByFormula: '{fldXbtQyDOFpWwGBQ} = ' + locals.user.id
+					filterByFormula: `{fldXbtQyDOFpWwGBQ} = ${queriedProject.user.id}`
 				})
 				.firstPage();
 
