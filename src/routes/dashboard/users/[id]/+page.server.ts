@@ -54,6 +54,7 @@ export async function load({ locals, params }) {
 			hasAdmin: requestedUser.hasAdmin,
 
 			shopScore: requestedUser.shopScore,
+			clay: requestedUser.clay,
 
 			createdAt: requestedUser.createdAt,
 			lastLoginAt: requestedUser.id === locals.user?.id ? requestedUser.lastLoginAt : null
