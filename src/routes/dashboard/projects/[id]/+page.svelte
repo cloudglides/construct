@@ -40,6 +40,15 @@
 	let imageInput: HTMLInputElement | undefined = $state();
 	let imagePreviewUrl = $state<string | null>(null);
 
+	// Cleanup preview URL on component unmount
+	$effect(() => {
+		return () => {
+			if (imagePreviewUrl) {
+				URL.revokeObjectURL(imagePreviewUrl);
+			}
+		};
+	});
+
 	function updateImagePreview() {
 		if (imagePreviewUrl) {
 			URL.revokeObjectURL(imagePreviewUrl);
