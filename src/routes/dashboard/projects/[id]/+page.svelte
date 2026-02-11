@@ -37,6 +37,28 @@
 	}
 
 	let formPending = $state(false);
+	let imageInput: HTMLInputElement | undefined = $state();
+
+	function handlePaste(e: ClipboardEvent) {
+		if (!imageInput) return;
+
+		const items = e.clipboardData?.items;
+		if (!items) return;
+
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+			if (item.type.indexOf('image/') === 0) {
+				const blob = item.getAsFile();
+				if (blob && ALLOWED_IMAGE_TYPES.includes(blob.type)) {
+					const dataTransfer = new DataTransfer();
+					dataTransfer.items.add(blob);
+					imageInput.files = dataTransfer.files;
+					e.preventDefault();
+					break;
+				}
+			}
+		}
+	}
 </script>
 
 <Head title={data.project.name} />
@@ -193,10 +215,11 @@
 						</p>
 					{/if}
 				</label>
-				<div class="mt-1 flex flex-row gap-2">
+				<div class="mt-1 flex flex-row gap-2" onpaste={handlePaste}>
 					<label class="flex grow flex-col gap-1">
 						Image
 						<input
+							bind:this={imageInput}
 							type="file"
 							name="image"
 							accept={ALLOWED_IMAGE_TYPES.join(', ')}
