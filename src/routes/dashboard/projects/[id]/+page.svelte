@@ -45,9 +45,9 @@
 		const items = e.clipboardData?.items;
 		if (!items) return;
 
-		for (let i = 0; i < items.length; i++) {
-			const item = items[i];
-			if (item.type.indexOf('image/') === 0) {
+		for (let index = 0; index < items.length; index++) {
+			const item = items[index];
+			if (item.type.startsWith('image/')) {
 				const blob = item.getAsFile();
 				if (blob && ALLOWED_IMAGE_TYPES.includes(blob.type)) {
 					const dataTransfer = new DataTransfer();
