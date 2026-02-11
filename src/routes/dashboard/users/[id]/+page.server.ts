@@ -55,6 +55,7 @@ export async function load({ locals, params }) {
 
 			shopScore: requestedUser.shopScore,
 			clay: requestedUser.clay,
+			brick: requestedUser.brick,
 
 			createdAt: requestedUser.createdAt,
 			lastLoginAt: requestedUser.id === locals.user?.id ? requestedUser.lastLoginAt : null
